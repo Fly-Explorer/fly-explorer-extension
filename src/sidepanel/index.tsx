@@ -1,10 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { SidePanel } from './SidePanel'
-import './index.css'
+
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
+import { App } from './app'
+
+const queryClient = new QueryClient()
 
 ReactDOM.createRoot(document.getElementById('app') as HTMLElement).render(
-  <React.StrictMode>
-    <SidePanel />
-  </React.StrictMode>,
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
 )

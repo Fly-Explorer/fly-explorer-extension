@@ -1,7 +1,8 @@
-console.log('background is running')
+// @ts-ignore
+import { setupMessageListener } from 'chrome-extension-message-wrapper'
+import browser from 'webextension-polyfill'
+import ServiceFunctions from './services'
 
-chrome.runtime.onMessage.addListener((request) => {
-  if (request.type === 'COUNT') {
-    console.log('background has received a message from popup, and count is ', request?.count)
-  }
-})
+export type BgFunctions = typeof ServiceFunctions
+
+browser.runtime.onMessage.addListener(setupMessageListener(ServiceFunctions))
