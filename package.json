@@ -16,7 +16,7 @@
     "node": ">=14.18.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "NODE_ENV=development vite build --watch",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "fmt": "prettier --write '**/*.{tsx,ts,json,css,scss,md}'",
@@ -48,6 +48,7 @@
     "gulp": "^4.0.2",
     "gulp-zip": "^6.0.0",
     "postcss": "^8.5.1",
+    "hot-reload-extension-vite": "^1.0.13",
     "prettier": "^3.0.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.2.2",
