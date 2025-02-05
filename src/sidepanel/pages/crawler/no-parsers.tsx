@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom'
 import Background from '../../../common/background'
 import CodeEditor from '../../components/CodeEditor'
 import ContentScript from '../../../contentScript/content-script'
-import { createVault, uploadFile } from '../../../tusky'
+import { createVault, getDataByID, getDataFromVault, getFileInfo, uploadFile } from '../../../tusky'
+import { Upload } from 'tus-js-client'
 
 export const NoParsers: FC = () => {
   const [isCodeEditorOpened, setIsCodeEditorOpened] = useState(false)
   const [path, setPath] = useState(null)
+  const [data, setData] = useState('')
   const [progress, setProgress] = useState(0)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -75,36 +77,6 @@ export const NoParsers: FC = () => {
         </Typography.Text>
         <Button type="primary" onClick={handleCreateAdapterClick} loading={isPending}>
           Create Parser
-        </Button>
-
-        <Input type='file'  onChange={async (e) => {
-          if(e.target.files &&  e.target.files.length > 0) {
-            const file = e.target.files[0]
-            await uploadFile(file, 'dfae36c8-dcbd-4e12-b13e-c7cb95be40ba', (percentage) => {
-              setProgress(percentage)
-            }, () => {
-              console.log('success')
-            }, () => {
-              console.log('error')
-            })
-          }
-        }} placeholder='path' />
-        {/* <Button type="primary" onClick={async () => {
-          console.log('click')
-          
-          console.log('done')
-        }
-      }
-        
-        >
-        Upload File
-        </Button> */}
-        <span >{progress}</span>
-        <Button type="primary" onClick={async () => {
-          const res = await createVault('we-ai')
-          console.log(res)
-        }}> 
-          create 'we-ai' vault
         </Button>
       </Flex>
     </AntdLayout>
