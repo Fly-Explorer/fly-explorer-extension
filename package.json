@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "WeAI",
   "displayName": "",
   "version": "0.0.0",
   "author": "no one",
@@ -23,19 +23,35 @@
     "zip": "npm run build && node src/zip.js"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.66.0",
+    "@uiw/codemirror-extensions-langs": "^4.23.7",
+    "antd": "^5.23.3",
+    "bn.js": "^5.2.1",
+    "chrome-extension-message-wrapper": "^1.0.5",
+    "json-stringify-deterministic": "^1.0.12",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-codemirror-merge": "^4.23.7",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.1.5",
+    "styled-components": "^6.1.14",
+    "webextension-polyfill": "^0.12.0"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.19",
+    "@types/bn.js": "^5.1.6",
     "@types/chrome": "^0.0.246",
     "@types/react": "^18.2.28",
     "@types/react-dom": "^18.2.13",
+    "@types/webextension-polyfill": "^0.12.1",
     "@vitejs/plugin-react": "^4.1.0",
+    "autoprefixer": "^10.4.20",
     "gulp": "^4.0.2",
     "gulp-zip": "^6.0.0",
+    "postcss": "^8.5.1",
     "prettier": "^3.0.3",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.2.2",
-    "vite": "^4.4.11"
+    "vite": "^4.4.11",
+    "vite-plugin-node-polyfills": "^0.23.0"
   }
 }
