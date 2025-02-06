@@ -310,6 +310,36 @@ async function main() {
     }
   }
 
+  async function deletePost(postElement: Element) {
+    try {
+      // Simply remove the post element from the DOM
+      postElement.remove()
+    } catch (err) {
+      console.error('Error removing post:', err)
+    }
+  }
+
+  // Add scroll handler
+  let lastScrollPosition = 0
+  const scrollThreshold = 100 // Reduced threshold for more frequent deletion
+
+  window.addEventListener('scroll', () => {
+    const currentPosition = window.scrollY
+    if (currentPosition - lastScrollPosition > scrollThreshold) {
+      lastScrollPosition = currentPosition
+
+      // Find all visible posts and remove them
+      const posts = document.querySelectorAll('article[data-testid="tweet"]')
+      posts.forEach(post => {
+        const rect = post.getBoundingClientRect()
+        // If post is visible in viewport
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          deletePost(post)
+        }
+      })
+    }
+  })
+
   browser.runtime.onMessage.addListener((message: any) => {
     if (!message || !message.type) return
     if (message.type === 'PING') {
@@ -333,6 +363,30 @@ async function main() {
     //   return Promise.resolve(picker.pickElement())
     // }
   })
+
+  // Add post deletion functionality for Twitter
+  if (window.location.hostname.includes('twitter.com') ||
+    window.location.hostname.includes('x.com')) {
+
+    let lastScrollPosition = 0
+    const scrollThreshold = 1000
+
+    window.addEventListener('scroll', () => {
+      const currentPosition = window.scrollY
+      if (currentPosition - lastScrollPosition > scrollThreshold) {
+        lastScrollPosition = currentPosition
+
+        // Get all visible posts
+        const posts = document.querySelectorAll('div[data-testid="cellInnerDiv"]')
+        posts.forEach(post => {
+          const rect = post.getBoundingClientRect()
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            deletePost(post)
+          }
+        })
+      }
+    })
+  }
 }
 
 function cloneContextTree(tree: IContextNode): ClonedContextNode {
