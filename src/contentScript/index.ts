@@ -310,6 +310,77 @@ async function main() {
     }
   }
 
+  function checkForScamIndicators(post: Element): boolean {
+    // Get the post text content
+    const tweetText = post.querySelector('[data-testid="tweetText"]')?.textContent?.toLowerCase() || ''
+    const userName = post.querySelector('[data-testid="User-Name"]')?.textContent?.toLowerCase() || ''
+
+    // Define scam indicators
+    const scamKeywords = [
+      'crypto',
+      'bitcoin',
+      'eth',
+      'giveaway',
+      'free',
+      'winner',
+      'dm me',
+      'double your',
+      'investment',
+      'profit',
+      'guaranteed',
+      'urgent',
+      'limited time',
+      'exclusive offer'
+    ]
+
+    // Check for scam indicators
+    return scamKeywords.some(keyword =>
+      tweetText.includes(keyword) || userName.includes(keyword)
+    )
+  }
+
+  function markPost(post: Element) {
+    try {
+      const isScam = checkForScamIndicators(post)
+
+      if (isScam) {
+        // Add red border for potential scams
+        post.setAttribute('style', `
+          border: 3px solid #ff0000 !important;
+          border-radius: 16px;
+          margin: 8px 0;
+          position: relative;
+        `)
+
+        // Add warning label
+        const warning = document.createElement('div')
+        warning.innerHTML = '⚠️ Potential Scam'
+        warning.setAttribute('style', `
+          position: absolute;
+          top: -10px;
+          right: 10px;
+          background: #ff0000;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: bold;
+          z-index: 1000;
+        `)
+        post.insertBefore(warning, post.firstChild)
+      } else {
+        // Add green border for likely safe posts
+        post.setAttribute('style', `
+          border: 2px solid #00ff00 !important;
+          border-radius: 16px;
+          margin: 8px 0;
+        `)
+      }
+    } catch (err) {
+      console.error('Error marking post:', err)
+    }
+  }
+
   async function deletePost(postElement: Element) {
     try {
       // Simply remove the post element from the DOM
@@ -328,13 +399,16 @@ async function main() {
     if (currentPosition - lastScrollPosition > scrollThreshold) {
       lastScrollPosition = currentPosition
 
-      // Find all visible posts and remove them
+      // Find all visible posts and process them
       const posts = document.querySelectorAll('article[data-testid="tweet"]')
       posts.forEach(post => {
         const rect = post.getBoundingClientRect()
         // If post is visible in viewport
         if (rect.top < window.innerHeight && rect.bottom > 0) {
-          deletePost(post)
+          // Mark posts before deleting them
+          markPost(post)
+          // Optional: Add a delay before deletion to show the marking
+          setTimeout(() => deletePost(post), 2000) // 2 second delay
         }
       })
     }
