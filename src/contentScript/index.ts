@@ -344,38 +344,105 @@ async function main() {
       const isScam = checkForScamIndicators(post)
 
       if (isScam) {
-        // Add red border for potential scams
+        // Enhanced danger gradient styling
         post.setAttribute('style', `
-          border: 3px solid #ff0000 !important;
+          border: 3px solid transparent !important;
+          background:
+            linear-gradient(#000, #000) padding-box,
+            linear-gradient(45deg,
+              #ff0000, #ff6b6b, #ff4500, #ff1493, #ff0000) border-box;
+          background-size: 300% 300%;
           border-radius: 16px;
           margin: 8px 0;
           position: relative;
+          box-shadow:
+            0 0 20px rgba(255, 0, 0, 0.3),
+            inset 0 0 20px rgba(255, 0, 0, 0.2);
+          animation: dangerGradient 3s ease infinite,
+                    dangerPulse 2s infinite;
         `)
 
-        // Add warning label
-        const warning = document.createElement('div')
-        warning.innerHTML = '⚠️ Potential Scam'
-        warning.setAttribute('style', `
-          position: absolute;
-          top: -10px;
-          right: 10px;
-          background: #ff0000;
-          color: white;
-          padding: 2px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: bold;
-          z-index: 1000;
-        `)
-        post.insertBefore(warning, post.firstChild)
+        // Add enhanced danger animations
+        const style = document.createElement('style')
+        style.textContent = `
+          @keyframes dangerGradient {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
+
+          @keyframes dangerPulse {
+            0% {
+              box-shadow: 0 0 20px rgba(255, 0, 0, 0.3),
+                          inset 0 0 20px rgba(255, 0, 0, 0.2);
+            }
+            50% {
+              box-shadow: 0 0 30px rgba(255, 0, 0, 0.5),
+                          inset 0 0 30px rgba(255, 0, 0, 0.3);
+            }
+            100% {
+              box-shadow: 0 0 20px rgba(255, 0, 0, 0.3),
+                          inset 0 0 20px rgba(255, 0, 0, 0.2);
+            }
+          }
+        `
+        document.head.appendChild(style)
       } else {
-        // Add green border for likely safe posts
+        // Keep existing safe post styling
         post.setAttribute('style', `
-          border: 2px solid #00ff00 !important;
+          border: 2px solid transparent !important;
+          background:
+            linear-gradient(#000, #000) padding-box,
+            linear-gradient(45deg,
+              #00ff00, #00ffaa, #00ffff, #00aaff, #0066ff, #00ff00) border-box;
+          background-size: 300% 300%;
           border-radius: 16px;
           margin: 8px 0;
+          box-shadow:
+            0 0 20px rgba(0, 255, 128, 0.3),
+            inset 0 0 20px rgba(0, 255, 128, 0.2);
+          animation: gradientBorder 3s ease infinite,
+                    safePulse 2s infinite;
         `)
       }
+
+      // Keep existing animations for safe posts
+      const style = document.createElement('style')
+      style.textContent = `
+        @keyframes gradientBorder {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        @keyframes safePulse {
+          0% {
+            box-shadow: 0 0 20px rgba(0, 255, 128, 0.3),
+                        inset 0 0 20px rgba(0, 255, 128, 0.2);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(0, 255, 128, 0.5),
+                        inset 0 0 30px rgba(0, 255, 128, 0.3);
+          }
+          100% {
+            box-shadow: 0 0 20px rgba(0, 255, 128, 0.3),
+                        inset 0 0 20px rgba(0, 255, 128, 0.2);
+          }
+        }
+      `
+      document.head.appendChild(style)
     } catch (err) {
       console.error('Error marking post:', err)
     }
