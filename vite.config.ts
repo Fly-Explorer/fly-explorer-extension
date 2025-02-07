@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import { crx } from '@crxjs/vite-plugin'
 import react from '@vitejs/plugin-react'
+import hotReloadExtension from 'hot-reload-extension-vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import hotReloadExtension from 'hot-reload-extension-vite'
 import manifest from './src/manifest'
@@ -19,14 +20,13 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-
     plugins: [
       crx({ manifest }),
       react(),
       nodePolyfills(),
       hotReloadExtension({
         log: true,
-        backgroundPath: 'path/to/background', // src/pages/background/index.ts
+        backgroundPath: 'src/background/index.ts',
       }),
     ],
     define: {
