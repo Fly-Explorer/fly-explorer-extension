@@ -1,13 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Layout as AntdLayout, Button, Flex, Space, Typography } from 'antd'
+import { Layout as AntdLayout, Button, Flex, Input, Space, Typography } from 'antd'
 import React, { FC, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Background from '../../../common/background'
 import CodeEditor from '../../components/CodeEditor'
 import ContentScript from '../../../contentScript/content-script'
+import { createVault, getDataByID, getDataFromVault, getFileInfo, uploadFile } from '../../../tusky'
+import { Upload } from 'tus-js-client'
 
 export const NoParsers: FC = () => {
   const [isCodeEditorOpened, setIsCodeEditorOpened] = useState(false)
+  const [path, setPath] = useState(null)
+  const [data, setData] = useState('')
+  const [progress, setProgress] = useState(0)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
