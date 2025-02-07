@@ -383,8 +383,82 @@ async function main() {
 
   async function deletePost(postElement: Element) {
     try {
-      // Simply remove the post element from the DOM
-      postElement.remove()
+      // Add CSS for the Thanos effect
+      const style = document.createElement('style')
+      style.textContent = `
+        @keyframes fadeAway {
+          0% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+
+        .particle {
+          position: absolute;
+          background: currentColor;
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 1000;
+        }
+
+        @keyframes float {
+          0% {
+            transform: translate(0, 0) rotate(0deg);
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) rotate(var(--r));
+            opacity: 0;
+          }
+        }
+      `
+      document.head.appendChild(style)
+
+      // Create particles
+      const rect = postElement.getBoundingClientRect()
+      const numParticles = 100
+      const particles = []
+
+      for (let i = 0; i < numParticles; i++) {
+        const particle = document.createElement('div')
+        particle.className = 'particle'
+
+        // Random position within the element
+        const x = Math.random() * rect.width + rect.left
+        const y = Math.random() * rect.height + rect.top
+
+        // Random size between 2-6px
+        const size = Math.random() * 4 + 2
+
+        // Get the color at this position
+        const color = window.getComputedStyle(postElement).color
+
+        // Set particle styles
+        particle.style.cssText = `
+          left: ${x}px;
+          top: ${y}px;
+          width: ${size}px;
+          height: ${size}px;
+          background: ${color};
+          --tx: ${(Math.random() - 0.5) * 100}px;
+          --ty: ${-Math.random() * 200}px;
+          --r: ${Math.random() * 360}deg;
+          animation: float 2s ease-out forwards;
+        `
+
+        document.body.appendChild(particle)
+        particles.push(particle)
+      }
+
+      // Fade out the original element
+      postElement.style.animation = 'fadeAway 2s forwards'
+
+      // Clean up
+      setTimeout(() => {
+        particles.forEach(p => p.remove())
+        postElement.remove()
+      }, 2000)
     } catch (err) {
       console.error('Error removing post:', err)
     }

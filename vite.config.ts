@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import { crx } from '@crxjs/vite-plugin'
 import react from '@vitejs/plugin-react'
-import hotReloadExtension from 'hot-reload-extension-vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import hotReloadExtension from 'hot-reload-extension-vite'
 import manifest from './src/manifest'
