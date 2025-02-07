@@ -4,6 +4,7 @@ import { config } from 'dotenv'
 config()
 const tus_api = process.env.TUS_API
 const key = process.env.TUSKY_API_KEY
+const defaultVault = process.env.DEFAULT_VAULT
 
 function generateRandomString(length: number): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -18,7 +19,6 @@ function generateRandomString(length: number): string {
 export async function uploadFile(
   // file: File,
   jsonObject: JSON,
-  vaultId: string,
   onLoad: (percentage: number) => void,
   onSuccess: (upload: Upload) => void,
   onError: () => void,
@@ -36,7 +36,7 @@ export async function uploadFile(
     metadata: {
       filename: `${generateRandomString(10)}.json`,
       filetype: 'application/json',
-      vaultId: vaultId, // ID of the vault where the file will be stored
+      vaultId: defaultVault || 'dfae36c8-dcbd-4e12-b13e-c7cb95be40ba', // ID of the vault where the file will be stored
     },
     uploadSize: jsonBlob.size,
     onError: (error) => {
@@ -89,11 +89,11 @@ export async function getDataByID(id: string) {
 }
 
 // get all file by a vault
-export async function getDataFromVault(vaultId: string) {
+export async function getDataFromVault() {
   if (!tus_api || !key) {
     throw new Error('TUS_API or TUSKY_API_KEY is not set')
   }
-  const response = await fetch(`${tus_api}/files?vaultId=${vaultId}`, {
+  const response = await fetch(`${tus_api}/files?vaultId=${defaultVault}`, {
     headers: {
       'Api-Key': key,
     },
