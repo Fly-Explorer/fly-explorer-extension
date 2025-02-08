@@ -1,0 +1,18 @@
+.blur-text {
+    display: inline-block;
+    filter: blur(8px);
+    opacity: 0.5;
+    transition: all 0.8s ease;
+}
+
+.blur-text.visible {
+    filter: blur(0);
+    opacity: 1;
+}
+
+.gradient-text {
+    background: linear-gradient(90deg, #4a90e2, #63f5aa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}

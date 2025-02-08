@@ -501,7 +501,6 @@ async function main() {
         // Get the color at this position
         const color = window.getComputedStyle(postElement).color
 
-        // Set particle styles
         particle.style.cssText = `
           left: ${x}px;
           top: ${y}px;
@@ -521,10 +520,20 @@ async function main() {
       // Fade out the original element
       postElement.style.animation = 'fadeAway 2s forwards'
 
-      // Clean up
+      // Clean up and rerun parser
       setTimeout(() => {
         particles.forEach(p => p.remove())
         postElement.remove()
+
+        // Rerun parser for suitable parsers
+        suitableParsers.forEach((p) => {
+          try {
+            core.detachParserConfig(p.id)
+            core.attachParserConfig(p)
+          } catch (err) {
+            console.error('Error reattaching parser:', err)
+          }
+        })
       }, 2000)
     } catch (err) {
       console.error('Error removing post:', err)

@@ -5,9 +5,8 @@ import { Default } from './pages/crawler'
 import { NoParsers } from './pages/crawler/no-parsers'
 import ContentScript from '../contentScript/content-script'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Layout } from './components/layout'
-import { Button, Typography } from 'antd'
-
+import { Chat } from './pages/personal'
+import { Layout, Typography, Button } from 'antd'
 export const App: React.FC = () => {
   const queryClient = useQueryClient()
 
@@ -35,13 +34,23 @@ export const App: React.FC = () => {
 
   if (!isAlive) {
     return (
-      <Layout>
-        <Typography.Text style={{ textAlign: 'center' }}>
-          No connection to the context page. Please reload the webpage.
-        </Typography.Text>
-        <Button type="primary" onClick={handleReloadClick} loading={isPageReloading}>
-          Reload Page
-        </Button>
+      <Layout style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Layout.Content style={{ textAlign: 'center', padding: '24px' }}>
+          <Typography.Title level={4} style={{ marginBottom: 16 }}>
+            Connection Lost
+          </Typography.Title>
+          <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
+            No connection to the context page. Please reload the webpage.
+          </Typography.Text>
+          <Button
+            type="primary"
+            onClick={handleReloadClick}
+            loading={isPageReloading}
+            size="large"
+          >
+            Reload Page
+          </Button>
+        </Layout.Content>
       </Layout>
     )
   }
@@ -49,7 +58,8 @@ export const App: React.FC = () => {
   return (
     <MemoryRouter initialEntries={['/']}>
       <Routes>
-        <Route path="/" Component={Default} />
+        <Route path="/" Component={Chat} />
+        <Route path="/default" Component={Default} />
         <Route path="collected-data" Component={CollectedData} />
         <Route path="no-parsers" Component={NoParsers} />
       </Routes>
