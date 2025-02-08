@@ -3,8 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Layout as AntdLayout,
   Button,
-  Card,
-  Descriptions,
   Flex,
   Space,
   TreeSelect,
@@ -19,6 +17,8 @@ import { Layout } from '../../components/layout'
 import { TreeTraverser } from '../../components/tree-traverser'
 import ContentScript from '../../../contentScript/content-script'
 import styled from 'styled-components'
+import { uploadFile } from '../../../tusky'
+import { UploadOptions } from 'tus-js-client'
 
 type ContextTypeTree = {
   value: string
@@ -44,13 +44,53 @@ function extractContextTypesTree(nodes: ClonedContextNode[]): ContextTypeTree[] 
   }))
 }
 
+const DataItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    transform: scale(1.02);
+  }
+
+  .label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+  }
+
+  .value {
+    font-size: 14px;
+    color: #2c3e50;
+    word-break: break-word;
+    line-height: 1.4;
+    font-weight: 400;
+    background: white;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+  }
+`
+
 const CustomCard = styled.div`
   background: white;
   border-radius: 12px;
   padding: 16px;
   position: relative;
   transition: all 0.3s ease;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+  margin-top: 8px;
 
   &::before {
     content: '';
@@ -76,6 +116,40 @@ const CustomCard = styled.div`
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
   }
+
+  &.selected {
+    background: rgba(69, 184, 172, 0.08);
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(69, 184, 172, 0.2);
+
+    &::before {
+      padding: 3px;
+      background: linear-gradient(
+        60deg,
+        #45b8ac,
+        #4ecdc4,
+        #45b8ac
+      );
+    }
+
+    ${DataItem} {
+      background: rgba(69, 184, 172, 0.06);
+      border-left: 3px solid #45b8ac;
+    }
+
+    ${DataItem} .label {
+      color: #45b8ac;
+      font-weight: 600;
+    }
+
+    ${DataItem} .value {
+      border-color: rgba(69, 184, 172, 0.2);
+    }
+
+    ${DataItem}:hover {
+      background: rgba(69, 184, 172, 0.1);
+    }
+  }
 `
 
 const Grid = styled.div`
@@ -83,56 +157,7 @@ const Grid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   padding: 8px;
-`
-
-const DataItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  background: rgba(0, 0, 0, 0.02);
-  padding: 12px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.04);
-    transform: scale(1.02);
-  }
-
-  .label {
-    font-size: 12px;
-    font-weight: 500;
-    color: #666;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: relative;
-    padding-left: 12px;
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 4px;
-      height: 4px;
-      background: #45b8ac;
-      border-radius: 50%;
-    }
-  }
-
-  .value {
-    font-size: 14px;
-    color: #2c3e50;
-    word-break: break-word;
-    line-height: 1.4;
-    font-weight: 400;
-    background: white;
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  }
+  margin-top: 8px;
 `
 
 const AnimatedButton = styled(Button)`
@@ -212,9 +237,120 @@ const StyledLayout = styled(AntdLayout)`
   min-height: 100vh;
 `
 
+const SelectButton = styled(Button)`
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &.selected {
+    background: linear-gradient(135deg, #45b8ac, #4ecdc4);
+    border: none;
+    color: white;
+    font-weight: 600;
+
+    &:hover {
+      background: linear-gradient(135deg, #4ecdc4, #45b8ac);
+      transform: translateY(-1px);
+    }
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+  }
+
+  &:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+`
+
+const SuccessCard = styled(CustomCard)`
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.05), rgba(168, 85, 247, 0.08));
+  animation: slideDown 0.5s ease-out, pulse 2s ease-in-out infinite;
+  border: none;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 32px rgba(147, 51, 234, 0.15);
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 8px 32px rgba(147, 51, 234, 0.15);
+    }
+    70% {
+      box-shadow: 0 12px 40px rgba(147, 51, 234, 0.3);
+    }
+    100% {
+      box-shadow: 0 8px 32px rgba(147, 51, 234, 0.15);
+    }
+  }
+
+  &::before {
+    padding: 2px;
+    background: linear-gradient(
+      60deg,
+      #9333ea,
+      #a855f7,
+      #9333ea
+    );
+  }
+
+  ${DataItem} {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.1);
+
+    .label {
+      color: #9333ea;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .value {
+      border: none;
+      background: transparent;
+      color: #1e293b;
+      font-family: 'Monaco', monospace;
+      font-size: 13px;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 1);
+      border-color: rgba(147, 51, 234, 0.4);
+    }
+  }
+
+  &:hover {
+    transform: none;
+    box-shadow: 0 12px 40px rgba(147, 51, 234, 0.2);
+  }
+`
+
 export const CollectedData: React.FC = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [selectedData, setSelectedData] = useState<ClonedContextNode[]>([])
+  const [uploadResponse, setUploadResponse] = useState<{ url: string; options: UploadOptions } | null>(null)
 
   const [contextTypes, setContextTypes] = useState<string[]>([])
   const [isCodeEditorOpened, setIsCodeEditorOpened] = useState(false)
@@ -296,6 +432,8 @@ export const CollectedData: React.FC = () => {
     )
   }
 
+  console.log("Selected indices", selectedData)
+
   return (
     <StyledLayout style={{ padding: 16 }}>
       <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
@@ -336,24 +474,100 @@ export const CollectedData: React.FC = () => {
             Collected Data
           </Typography.Title>
           <Flex vertical gap="small">
-            <ActionButtons>
-              <AnimatedButton
-                block
-                onClick={handlePickElementClick}
-                loading={isElementPicking}
-              >
-                Pick Element
-              </AnimatedButton>
-              <AnimatedButton
-                block
-                onClick={handleDeleteParserClick}
-                loading={isParserDeleting}
-              >
-                Delete Parser
-              </AnimatedButton>
-            </ActionButtons>
+            <AnimatedButton
+              block
+              type="primary"
+              onClick={async () => {
+                try {
+                  await uploadFile(
+                    selectedData.map(node => node.parsedContext) as unknown as JSON,
+                    (percentage) => {
+                      console.log('Upload progress:', percentage)
+                    },
+                    (upload) => {
+                      console.log('Upload complete:', upload)
+                      setSelectedData([])
+                      setUploadResponse({
+                        url: upload.url ?? '',
+                        options: upload.options
+                      })
+                    },
+                    () => {
+                      console.error('Upload failed')
+                      setUploadResponse(null)
+                    }
+                  )
+                } catch (error) {
+                  console.error('Error uploading:', error)
+                  setUploadResponse(null)
+                }
+              }}
+              disabled={selectedData.length === 0}
+              style={{
+                background: 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
+                border: 'none',
+                color: 'white',
+                fontWeight: '500',
+                height: '40px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(78, 205, 196, 0.2)',
+                marginBottom: '10px'
+              }}
+            >
+              Upload to Walrus
+            </AnimatedButton>
+
+            {uploadResponse && (
+              <SuccessCard>
+                <Typography.Title level={5} style={{
+                  color: '#9333ea',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{
+                    display: 'inline-block',
+                    width: '8px',
+                    height: '8px',
+                    background: '#a855f7',
+                    borderRadius: '50%',
+                    animation: 'pulse 2s ease-in-out infinite'
+                  }}></span>
+                  Upload Success
+                </Typography.Title>
+                <Grid>
+                  <DataItem>
+                    <span className="label">Vault URL</span>
+                    <a
+                      className="value"
+                      href={`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#9333ea', textDecoration: 'none' }}
+                    >
+                      {`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
+                    </a>
+                  </DataItem>
+                  {uploadResponse.options && (
+                    <DataItem>
+                      <span className="label">Metadata</span>
+                      <span className="value">
+                        {uploadResponse.options.metadata ?
+                          Object.entries(uploadResponse.options.metadata).map(([key, value]) =>
+                            `${key}: ${value}`
+                          ).join('\n')
+                          : 'No metadata'
+                        }
+                      </span>
+                    </DataItem>
+                  )}
+                </Grid>
+              </SuccessCard>
+            )}
+
             <TreeSelect
-              style={{ width: '100%' }}
+              style={{ width: '100%', marginBottom: '10px' }}
               value={contextTypes}
               dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
               treeData={contextTypesTree}
@@ -366,17 +580,43 @@ export const CollectedData: React.FC = () => {
               node={contextTree}
               component={({ node }) => {
                 if (!contextTypes.includes(node.contextType) && contextTypes.length > 0) return null
+                const isSelected = selectedData.some(selectedNode => selectedNode.id === node.id)
+
                 return (
-                  <CustomCard>
+                  <CustomCard
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedData(prev => prev.filter(n => n.id !== node.id))
+                      } else {
+                        setSelectedData(prev => [...prev, node])
+                      }
+                    }}
+                    className={isSelected ? 'selected' : ''}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <Flex justify="space-between" align="center" style={{ marginBottom: '8px' }}>
+                      <Typography.Text strong style={{
+                        color: isSelected ? '#45b8ac' : 'inherit',
+                        transition: 'color 0.3s ease'
+                      }}>
+                        {node.contextType}
+                      </Typography.Text>
+                      <SelectButton
+                        size="small"
+                        className={isSelected ? 'selected' : ''}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isSelected) {
+                            setSelectedData(prev => prev.filter(n => n.id !== node.id))
+                          } else {
+                            setSelectedData(prev => [...prev, node])
+                          }
+                        }}
+                      >
+                        {isSelected ? 'Selected' : 'Select'}
+                      </SelectButton>
+                    </Flex>
                     <Grid>
-                      {/* <DataItem>
-                        <span className="label">Namespace</span>
-                        <span className="value">{node.namespace}</span>
-                      </DataItem> */}
-                      {/* <DataItem>
-                        <span className="label">Context Type</span>
-                        <span className="value">{node.contextType}</span>
-                      </DataItem> */}
                       <DataItem>
                         <span className="label">ID</span>
                         <span className="value">{node.id}</span>
