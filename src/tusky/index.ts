@@ -4,7 +4,8 @@ import { config } from 'dotenv'
 config()
 const tus_api = process.env.TUS_API
 const key = process.env.TUSKY_API_KEY
-const defaultVault = process.env.DEFAULT_VAULT
+const defaultVaultId = process.env.DEFAULT_VAULT_ID
+const defaultParentId = process.env.DEFAULT_PARENT_ID
 
 function generateRandomString(length: number): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -16,17 +17,47 @@ function generateRandomString(length: number): string {
   return result
 }
 
+//to check that user have been created a folder and create if not
+export async function checkUserFolder(folderName: string) {
+  if (!tus_api || !key) return 'TUS_API or TUSKY_API_KEY is not set'
+  const folders = await fetch(
+    `${tus_api}/folders?vaultId=${defaultVaultId}&parentId=${defaultParentId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Api-Key': key,
+      },
+    },
+  ).then((response) => response.json())
+  console.log(folders)
+  const folder = folders.items.find((folder: any) => folder.name == folderName)
+  if (folder) {
+    return folder
+  } else {
+    console.log('Creating new folder..')
+    return createFolder(folderName)
+  }
+  //get list folder
+}
+
+// to upload file users folder
 export async function uploadFile(
-  // file: File,
   jsonObject: JSON,
+  folderName: string,
   onLoad: (percentage: number) => void,
   onSuccess: (upload: Upload) => void,
   onError: () => void,
 ) {
-  const jsonBlob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' })
-  if (!tus_api || !key) {
+  console.log('Uploading file... iner')
+  if (!tus_api || !key || !defaultVaultId) {
+    console.log('TUS_API or TUSKY_API_KEY is not set')
     throw new Error('TUS_API or TUSKY_API_KEY is not set')
   }
+  const folder = await checkUserFolder(folderName)
+  console.log(folder)
+  const jsonBlob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' })
+
+  console.log('Uploading file...')
   const upload = new Upload(jsonBlob, {
     endpoint: `${tus_api}/uploads`,
     retryDelays: [0, 3000, 5000, 10000, 20000],
@@ -36,7 +67,8 @@ export async function uploadFile(
     metadata: {
       filename: `${generateRandomString(10)}.json`,
       filetype: 'application/json',
-      vaultId: defaultVault || 'dfae36c8-dcbd-4e12-b13e-c7cb95be40ba', // ID of the vault where the file will be stored
+      vaultId: defaultVaultId, // ID of the vault where the file will be stored
+      parentId: folder.id, // ID of the folder where the file will be stored
     },
     uploadSize: jsonBlob.size,
     onError: (error) => {
@@ -89,11 +121,11 @@ export async function getDataByID(id: string) {
 }
 
 // get all file by a vault
-export async function getDataFromVault() {
+export async function getDataFromVault(vaultId: string) {
   if (!tus_api || !key) {
     throw new Error('TUS_API or TUSKY_API_KEY is not set')
   }
-  const response = await fetch(`${tus_api}/files?vaultId=${defaultVault}`, {
+  const response = await fetch(`${tus_api}/files?vaultId=${vaultId}`, {
     headers: {
       'Api-Key': key,
     },
@@ -114,40 +146,27 @@ export async function getFileInfo(id: string) {
   return await response.json()
 }
 
-// export async function uploadFile(
-//   file: File,
-//   vaultId: string,
-//   onLoad: (percentage: number) => void,
-//   onSuccess: () => void,
-//   onError: () => void,
-// ) {
-//   // const jsonBlob = new Blob([JSON.stringify(jsonObject)], { type: "application/json" });
+export async function createFolder(folderName: string) {
+  try {
+    if (!tus_api || !key) {
+      throw new Error('TUS_API or TUSKY_API_KEY is not set')
+    }
+    const response = await fetch(`${tus_api}/folders`, {
+      method: 'POST',
+      headers: {
+        'Api-Key': key,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: folderName,
+        vaultId: defaultVaultId,
+        parentId: defaultParentId,
+      }),
+    })
+    return await response.json()
+  } catch (error) {
+    return error
+  }
+}
 
-//   const upload = new Upload(file, {
-//     endpoint: `${tus_api}/uploads`,
-//     retryDelays: [0, 3000, 5000, 10000, 20000],
-//     headers: {
-//       'Api-Key': key,
-//     },
-//     metadata: {
-//       filename: file.name,
-//       filetype: file.type,
-//       vaultId: vaultId, // ID of the vault where the file will be stored
-//     },
-//     uploadSize: file.size,
-//     onError: (error) => {
-//       onError()
-//       console.error('Upload failed:', error.message)
-//     },
-//     onProgress: (bytesUploaded, bytesTotal) => {
-//       const percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2)
-//       onLoad(Number(percentage))
-//       console.log(`Upload progress: ${percentage}%`)
-//     },
-//     onSuccess: () => {
-//       onSuccess()
-//       console.log('Upload finished:', upload.url)
-//     },
-//   })
-//   await upload.start()
-// }
+//sapmle parent 2f3e73f9-77c2-473a-b8cd-0776e1b79cc3
