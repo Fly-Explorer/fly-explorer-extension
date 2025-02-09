@@ -310,6 +310,260 @@ async function main() {
     }
   }
 
+  function checkForScamIndicators(post: Element): boolean {
+    // Get the post text content
+    const tweetText = post.querySelector('[data-testid="tweetText"]')?.textContent?.toLowerCase() || ''
+    const userName = post.querySelector('[data-testid="User-Name"]')?.textContent?.toLowerCase() || ''
+
+    // Define scam indicators
+    const scamKeywords = [
+      'crypto',
+      'bitcoin',
+      'eth',
+      'giveaway',
+      'free',
+      'winner',
+      'dm me',
+      'double your',
+      'investment',
+      'profit',
+      'guaranteed',
+      'urgent',
+      'limited time',
+      'exclusive offer'
+    ]
+
+    // Check for scam indicators
+    return scamKeywords.some(keyword =>
+      tweetText.includes(keyword) || userName.includes(keyword)
+    )
+  }
+
+  function markPost(post: Element) {
+    try {
+      const isScam = checkForScamIndicators(post)
+
+      if (isScam) {
+        // Enhanced danger gradient styling
+        post.setAttribute('style', `
+          border: 3px solid transparent !important;
+          background:
+            linear-gradient(#000, #000) padding-box,
+            linear-gradient(45deg,
+              #ff0000, #ff6b6b, #ff4500, #ff1493, #ff0000) border-box;
+          background-size: 300% 300%;
+          border-radius: 16px;
+          margin: 8px 0;
+          position: relative;
+          box-shadow:
+            0 0 20px rgba(255, 0, 0, 0.3),
+            inset 0 0 20px rgba(255, 0, 0, 0.2);
+          animation: dangerGradient 3s ease infinite,
+                    dangerPulse 2s infinite;
+        `)
+
+        // Add enhanced danger animations
+        const style = document.createElement('style')
+        style.textContent = `
+          @keyframes dangerGradient {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
+
+          @keyframes dangerPulse {
+            0% {
+              box-shadow: 0 0 20px rgba(255, 0, 0, 0.3),
+                          inset 0 0 20px rgba(255, 0, 0, 0.2);
+            }
+            50% {
+              box-shadow: 0 0 30px rgba(255, 0, 0, 0.5),
+                          inset 0 0 30px rgba(255, 0, 0, 0.3);
+            }
+            100% {
+              box-shadow: 0 0 20px rgba(255, 0, 0, 0.3),
+                          inset 0 0 20px rgba(255, 0, 0, 0.2);
+            }
+          }
+        `
+        document.head.appendChild(style)
+      } else {
+        // Keep existing safe post styling
+        post.setAttribute('style', `
+          border: 2px solid transparent !important;
+          background:
+            linear-gradient(#000, #000) padding-box,
+            linear-gradient(45deg,
+              #00ff00, #00ffaa, #00ffff, #00aaff, #0066ff, #00ff00) border-box;
+          background-size: 300% 300%;
+          border-radius: 16px;
+          margin: 8px 0;
+          box-shadow:
+            0 0 20px rgba(0, 255, 128, 0.3),
+            inset 0 0 20px rgba(0, 255, 128, 0.2);
+          animation: gradientBorder 3s ease infinite,
+                    safePulse 2s infinite;
+        `)
+      }
+
+      // Keep existing animations for safe posts
+      const style = document.createElement('style')
+      style.textContent = `
+        @keyframes gradientBorder {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        @keyframes safePulse {
+          0% {
+            box-shadow: 0 0 20px rgba(0, 255, 128, 0.3),
+                        inset 0 0 20px rgba(0, 255, 128, 0.2);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(0, 255, 128, 0.5),
+                        inset 0 0 30px rgba(0, 255, 128, 0.3);
+          }
+          100% {
+            box-shadow: 0 0 20px rgba(0, 255, 128, 0.3),
+                        inset 0 0 20px rgba(0, 255, 128, 0.2);
+          }
+        }
+      `
+      document.head.appendChild(style)
+    } catch (err) {
+      console.error('Error marking post:', err)
+    }
+  }
+
+  async function deletePost(postElement: Element) {
+    try {
+      // Add CSS for the Thanos effect
+      const style = document.createElement('style')
+      style.textContent = `
+        @keyframes fadeAway {
+          0% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+
+        .particle {
+          position: absolute;
+          background: currentColor;
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 1000;
+        }
+
+        @keyframes float {
+          0% {
+            transform: translate(0, 0) rotate(0deg);
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) rotate(var(--r));
+            opacity: 0;
+          }
+        }
+      `
+      document.head.appendChild(style)
+
+      // Create particles
+      const rect = postElement.getBoundingClientRect()
+      const numParticles = 100
+      const particles = []
+
+      for (let i = 0; i < numParticles; i++) {
+        const particle = document.createElement('div')
+        particle.className = 'particle'
+
+        // Random position within the element
+        const x = Math.random() * rect.width + rect.left
+        const y = Math.random() * rect.height + rect.top
+
+        // Random size between 2-6px
+        const size = Math.random() * 4 + 2
+
+        // Get the color at this position
+        const color = window.getComputedStyle(postElement).color
+
+        particle.style.cssText = `
+          left: ${x}px;
+          top: ${y}px;
+          width: ${size}px;
+          height: ${size}px;
+          background: ${color};
+          --tx: ${(Math.random() - 0.5) * 100}px;
+          --ty: ${-Math.random() * 200}px;
+          --r: ${Math.random() * 360}deg;
+          animation: float 2s ease-out forwards;
+        `
+
+        document.body.appendChild(particle)
+        particles.push(particle)
+      }
+
+      // Fade out the original element
+      postElement.style.animation = 'fadeAway 2s forwards'
+
+      // Clean up and rerun parser
+      setTimeout(() => {
+        particles.forEach(p => p.remove())
+        postElement.remove()
+
+        // Rerun parser for suitable parsers
+        suitableParsers.forEach((p) => {
+          try {
+            core.detachParserConfig(p.id)
+            core.attachParserConfig(p)
+          } catch (err) {
+            console.error('Error reattaching parser:', err)
+          }
+        })
+      }, 2000)
+    } catch (err) {
+      console.error('Error removing post:', err)
+    }
+  }
+
+  // Add scroll handler
+  let lastScrollPosition = 0
+  const scrollThreshold = 100 // Reduced threshold for more frequent deletion
+
+  window.addEventListener('scroll', () => {
+    const currentPosition = window.scrollY
+    if (currentPosition - lastScrollPosition > scrollThreshold) {
+      lastScrollPosition = currentPosition
+
+      // Find all visible posts and process them
+      const posts = document.querySelectorAll('article[data-testid="tweet"]')
+      posts.forEach(post => {
+        const rect = post.getBoundingClientRect()
+        // If post is visible in viewport
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          // Mark posts before deleting them
+          markPost(post)
+          // Optional: Add a delay before deletion to show the marking
+          setTimeout(() => deletePost(post), 2000) // 2 second delay
+        }
+      })
+    }
+  })
+
   browser.runtime.onMessage.addListener((message: any) => {
     if (!message || !message.type) return
     if (message.type === 'PING') {
@@ -333,6 +587,30 @@ async function main() {
     //   return Promise.resolve(picker.pickElement())
     // }
   })
+
+  // Add post deletion functionality for Twitter
+  if (window.location.hostname.includes('twitter.com') ||
+    window.location.hostname.includes('x.com')) {
+
+    let lastScrollPosition = 0
+    const scrollThreshold = 1000
+
+    window.addEventListener('scroll', () => {
+      const currentPosition = window.scrollY
+      if (currentPosition - lastScrollPosition > scrollThreshold) {
+        lastScrollPosition = currentPosition
+
+        // Get all visible posts
+        const posts = document.querySelectorAll('div[data-testid="cellInnerDiv"]')
+        posts.forEach(post => {
+          const rect = post.getBoundingClientRect()
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            deletePost(post)
+          }
+        })
+      }
+    })
+  }
 }
 
 function cloneContextTree(tree: IContextNode): ClonedContextNode {
