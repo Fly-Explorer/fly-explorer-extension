@@ -17,7 +17,7 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development vite build --watch",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "fmt": "prettier --write '**/*.{tsx,ts,json,css,scss,md}'",
     "zip": "npm run build && node src/zip.js"

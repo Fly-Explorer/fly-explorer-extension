@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 export const Chat = () => {
   const [flyName, setFlyName] = React.useState('');
   const [flyInterests, setFlyInterests] = React.useState('');
+  const [suiAddress, setSuiAddress] = React.useState('');
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
   useEffect(() => {
@@ -18,6 +19,12 @@ export const Chat = () => {
         setFlyInterests(result.flyInterests);
       }
     });
+
+    chrome.storage.local.get(['suiAddress'], (result) => {
+      if (result.suiAddress) {
+        setSuiAddress(result.suiAddress);
+      }
+    });
   }, []);
 
   const handleClick = () => {
@@ -27,6 +34,12 @@ export const Chat = () => {
     }, () => {
       console.log('Interests saved:', flyInterests);
       navigate('/default');
+    });
+
+    chrome.storage.local.set({
+      suiAddress: suiAddress
+    }, () => {
+      console.log('Sui address saved:', suiAddress);
     });
   }
 
@@ -40,8 +53,19 @@ export const Chat = () => {
       </div>
 
       <div className="form-container">
-        <div className="input-group">
-          <label>What's the short name of your research?</label>
+        <div className="input-group animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <label className="input-label text-center">Sui Address</label>
+          <input
+            type="text"
+            value={suiAddress}
+            onChange={(e) => setSuiAddress(e.target.value)}
+            className="text-input"
+            placeholder="Enter sui address"
+          />
+        </div>
+
+        {/* <div className="input-group animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <label className="input-label text-center">Interest Name</label>
           <input
             type="text"
             value={flyName}
@@ -49,10 +73,10 @@ export const Chat = () => {
             className="text-input"
             placeholder="Enter research name..."
           />
-        </div>
+        </div> */}
 
-        <div className="input-group">
-          <label>What do you want to see?</label>
+        <div className="input-group animate-slide-up" style={{ animationDelay: '0.6s' }}>
+          <label className="input-label text-center">Topics of Interest</label>
           <textarea
             value={flyInterests}
             onChange={(e) => setFlyInterests(e.target.value)}
@@ -62,7 +86,7 @@ export const Chat = () => {
           />
         </div>
 
-        <button onClick={handleClick} className="create-button">
+        <button onClick={handleClick} className="create-button animate-slide-up" style={{ animationDelay: '0.8s' }}>
           <span>Finish</span>
         </button>
       </div>

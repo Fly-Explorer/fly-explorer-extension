@@ -3,6 +3,7 @@ import browser from 'webextension-polyfill'
 import Background from '../common/background'
 import { ClonedContextNode } from '../common/types'
 import { utils } from '../utils'
+import { sendMessage } from '../api'
 
 async function main() {
   const core = new Core()
@@ -310,27 +311,54 @@ async function main() {
     }
   }
 
-  function checkForScamIndicators(post: Element): boolean {
+  async function checkForScamIndicators(post: Element): Promise<boolean> {
     // Get the post text content
     const tweetText = post.querySelector('[data-testid="tweetText"]')?.textContent?.toLowerCase() || ''
     const userName = post.querySelector('[data-testid="User-Name"]')?.textContent?.toLowerCase() || ''
 
-    // Define scam indicators
+    // call api to get the sentiment analysis label
+    // const resp = await sendMessage(`sentiment analysis this post: ${tweetText}`)
+
+    // const label = resp[1].params.label;
+
+    // Define scam indicators with categorized keywords
     const scamKeywords = [
-      'crypto',
-      'bitcoin',
-      'eth',
-      'giveaway',
-      'free',
-      'winner',
-      'dm me',
-      'double your',
-      'investment',
-      'profit',
-      'guaranteed',
-      'urgent',
-      'limited time',
-      'exclusive offer'
+      // Crypto-related
+      'crypto', 'bitcoin', 'btc', 'eth', 'ethereum', 'binance', 'wallet',
+      'blockchain', 'defi', 'nft', 'token', 'airdrop', 'mining', 'hodl',
+      'altcoin', 'doge', 'shib', 'metamask', 'web3',
+
+      // Money/Investment related
+      'investment', 'profit', 'roi', 'passive income', 'double your',
+      'triple your', '10x', '100x', 'guaranteed returns', 'high yield',
+      'quick money', 'fast cash', 'earn daily', 'trading signals',
+      'forex trading', 'day trading', 'binary options',
+
+      // Urgency/FOMO triggers
+      'urgent', 'limited time', 'act now', 'last chance', 'don\'t miss out',
+      'ending soon', 'only today', 'exclusive offer', 'limited slots',
+      'closing soon', 'final call', 'time sensitive',
+
+      // Giveaway/Free stuff
+      'giveaway', 'free', 'winner', 'claim now', 'you\'ve won',
+      'congratulations', 'lucky winner', 'selected winner', 'prize',
+      'bonus', 'reward', 'free money', 'free coins',
+
+      // Contact/Action phrases
+      'dm me', 'message me', 'click here', 'join now', 'sign up now',
+      'register now', 'verify now', 'connect wallet', 'sync wallet',
+      'validate wallet', 'restore access',
+
+      // Trust/Authority signals
+      'trusted', 'legitimate', 'official', 'verified', 'guaranteed',
+      'risk-free', 'safe investment', 'proven system', 'expert trader',
+      'certified', 'regulated',
+
+      // Common scam phrases
+      'make money fast', 'work from home', 'financial freedom',
+      'be your own boss', 'secret method', 'hidden technique',
+      'proprietary system', 'insider info', 'private group',
+      'exclusive community', 'success formula'
     ]
 
     // Check for scam indicators
@@ -339,13 +367,27 @@ async function main() {
     )
   }
 
-  function markPost(post: Element) {
+  async function markPost(post: Element) {
     try {
-      const isScam = checkForScamIndicators(post)
+      // Increase random delay range to 0-5 seconds with exponential distribution
+      const baseDelay = Math.random() * 3000; // 0-3 seconds base delay
+      const extraDelay = Math.pow(Math.random(), 2) * 2000; // 0-2 seconds extra delay with exponential distribution
+      const delay = baseDelay + extraDelay;
+
+      // Add small random variation to make it feel more organic
+      const jitter = (Math.random() - 0.5) * 500; // ±250ms random jitter
+
+      await new Promise(resolve => setTimeout(resolve, delay + jitter));
+
+      const isScam = await checkForScamIndicators(post)
+
+      // Slower fade-in animation (1 second instead of 0.5)
+      post.style.opacity = '0';
+      post.style.transition = 'opacity 1s ease-in';
 
       if (isScam) {
-        // Enhanced danger gradient styling
         post.setAttribute('style', `
+          opacity: 0;
           border: 3px solid transparent !important;
           background:
             linear-gradient(#000, #000) padding-box,
@@ -360,42 +402,11 @@ async function main() {
             inset 0 0 20px rgba(255, 0, 0, 0.2);
           animation: dangerGradient 3s ease infinite,
                     dangerPulse 2s infinite;
+          transition: opacity 1s ease-in;
         `)
-
-        // Add enhanced danger animations
-        const style = document.createElement('style')
-        style.textContent = `
-          @keyframes dangerGradient {
-            0% {
-              background-position: 0% 50%;
-            }
-            50% {
-              background-position: 100% 50%;
-            }
-            100% {
-              background-position: 0% 50%;
-            }
-          }
-
-          @keyframes dangerPulse {
-            0% {
-              box-shadow: 0 0 20px rgba(255, 0, 0, 0.3),
-                          inset 0 0 20px rgba(255, 0, 0, 0.2);
-            }
-            50% {
-              box-shadow: 0 0 30px rgba(255, 0, 0, 0.5),
-                          inset 0 0 30px rgba(255, 0, 0, 0.3);
-            }
-            100% {
-              box-shadow: 0 0 20px rgba(255, 0, 0, 0.3),
-                          inset 0 0 20px rgba(255, 0, 0, 0.2);
-            }
-          }
-        `
-        document.head.appendChild(style)
       } else {
-        // Keep existing safe post styling
         post.setAttribute('style', `
+          opacity: 0;
           border: 2px solid transparent !important;
           background:
             linear-gradient(#000, #000) padding-box,
@@ -409,8 +420,17 @@ async function main() {
             inset 0 0 20px rgba(0, 255, 128, 0.2);
           animation: gradientBorder 3s ease infinite,
                     safePulse 2s infinite;
+          transition: opacity 1s ease-in;
         `)
       }
+
+      // Add slight delay before fade in
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Trigger reflow and fade in
+      requestAnimationFrame(() => {
+        post.style.opacity = '1';
+      });
 
       // Keep existing animations for safe posts
       const style = document.createElement('style')
@@ -558,7 +578,7 @@ async function main() {
           // Mark posts before deleting them
           markPost(post)
           // Optional: Add a delay before deletion to show the marking
-          setTimeout(() => deletePost(post), 2000) // 2 second delay
+          // setTimeout(() => deletePost(post), 2000) // 2 second delay
         }
       })
     }
@@ -605,7 +625,7 @@ async function main() {
         posts.forEach(post => {
           const rect = post.getBoundingClientRect()
           if (rect.top < window.innerHeight && rect.bottom > 0) {
-            deletePost(post)
+            // deletePost(post)
           }
         })
       }
