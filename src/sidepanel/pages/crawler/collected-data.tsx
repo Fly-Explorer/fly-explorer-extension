@@ -8,7 +8,7 @@ import {
   TreeSelect,
   Typography,
 } from 'antd'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClonedContextNode } from '../../../common/types'
 import { getNameFromId } from '../../../utils'
@@ -354,6 +354,13 @@ export const CollectedData: React.FC = () => {
 
   const [contextTypes, setContextTypes] = useState<string[]>([])
   const [isCodeEditorOpened, setIsCodeEditorOpened] = useState(false)
+  const [suiAddress, setSuiAddress] = useState<string>('')
+
+  useEffect(() => {
+    chrome.storage.local.get('suiAddress').then((result) => {
+      setSuiAddress(result.suiAddress || '')
+    })
+  }, [])
 
   const { data: contextTree } = useQuery({
     queryFn: ContentScript.getContextTree,
@@ -481,6 +488,7 @@ export const CollectedData: React.FC = () => {
                 try {
                   await uploadFile(
                     selectedData.map(node => node.parsedContext) as unknown as JSON,
+                    suiAddress,
                     (percentage) => {
                       console.log('Upload progress:', percentage)
                     },

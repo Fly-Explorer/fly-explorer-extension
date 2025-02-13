@@ -1,0 +1,255 @@
+[
+    {
+        "id": "parser/twitter",
+        "source": "origin",
+        "version": "0",
+        "parserType": "json",
+        "targets": [
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "twitter.com"
+                    }
+                }
+            },
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "x.com"
+                    }
+                }
+            },
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "www.x.com"
+                    }
+                }
+            },
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "www.twitter.com"
+                    }
+                }
+            }
+        ],
+        "contexts": {
+            "root": {
+                "props": {
+                    "id": "string('global')",
+                    "websiteName": "string('X')",
+                    "username": "substring-after(string(//header//a[@aria-label='Profile']/@href), '/')",
+                    "fullname": "string(//*[@aria-label='Account menu']//img/@alt)",
+                    "img": "string(//*[@aria-label='Account menu']//img/@src)",
+                    "url": "string(//html/head/meta[@property='og:url']/@content)"
+                },
+                "children": [
+                    "timeline",
+                    "profile"
+                ]
+            },
+            "timeline": {
+                "selector": "main [data-testid=primaryColumn] section > div",
+                "props": {
+                    "id": "string('timeline')",
+                    "title": "string(./@aria-label)"
+                },
+                "children": [
+                    "post"
+                ]
+            },
+            "post": {
+                "selector": "div[data-testid=cellInnerDiv]",
+                "props": {
+                    "id": "substring-after(string(.//time/../@href), 'status/')",
+                    "text": "string(.//*[@data-testid='tweetText'])",
+                    "authorFullname": "string(.//*[@data-testid='User-Name']//span)",
+                    "authorUsername": "substring-before(substring-after(string(.//time/../@href), '/'), '/')",
+                    "authorImg": "string(.//img/@src)",
+                    "createdAt": "string(.//time/@datetime)",
+                    "url": "concat('https://x.com/', substring-before(substring-after(string(.//time/../@href), '/'), '/'), '/status/', substring-after(string(.//time/../@href), 'status/'))"
+                },
+                "insertionPoints": {
+                    "root": {
+                        "selector": ":scope > div",
+                        "bosLayoutManager": "bos.dapplets.near/widget/ContextActionsGroup",
+                        "insertionType": "before"
+                    },
+                    "southPanel": {
+                        "selector": "div[role=group] > *:last-child",
+                        "insertionType": "after"
+                    },
+                    "avatar": {
+                        "selector": "div.r-18kxxzh.r-1wbh5a2.r-13qz1uu > *:last-child",
+                        "insertionType": "after"
+                    },
+                    "afterText": {
+                        "selector": "[data-testid=tweetText]",
+                        "bosLayoutManager": "bos.dapplets.near/widget/VerticalLayoutManager",
+                        "insertionType": "end"
+                    }
+                },
+                "children": [
+                    "postSouthButton",
+                    "postAvatar"
+                ]
+            },
+            "postSouthButton": {
+                "selector": "div[role='group'] > div.css-175oi2r",
+                "props": {
+                    "id": "string(.//*/@data-testid)"
+                }
+            },
+            "profile": {
+                "selector": "[data-testid='primaryColumn'] div.r-13qz1uu.r-1ye8kvj > div",
+                "props": {
+                    "id": "substring-after(string(.//*[@data-testid='UserName']), '@')",
+                    "authorFullname": "string(.//*[@data-testid='UserName']//span[1])",
+                    "authorUsername": "substring-after(string(.//*[@data-testid='UserName']), '@')",
+                    "authorImg": "string(.//img[contains(@alt,'Opens profile photo')]/@src)",
+                    "url": "concat('https://x.com/', substring-after(string(.//*[@data-testid='UserName']), '@'))"
+                },
+                "insertionPoints": {
+                    "southPanel": {
+                        "selector": "[data-testid=placementTracking]",
+                        "insertionType": "after"
+                    },
+                    "avatar": {
+                        "selector": "div.r-1ifxtd0.r-ymttw5.r-ttdzmv div.r-ggadg3.r-u8s1d.r-8jfcpp",
+                        "insertionType": "begin"
+                    }
+                }
+            },
+            "postAvatar": {
+                "selector": "[data-testid='Tweet-User-Avatar']",
+                "props": {
+                    "id": "string('avatar')"
+                }
+            }
+        }
+    },
+    {
+        "id": "parser/stackoverflow",
+        "parserType": "json",
+        "source": "origin",
+        "version": "0",
+        "targets": [
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "stackoverflow.com"
+                    }
+                }
+            },
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "stackoverflow.blog"
+                    }
+                }
+            },
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "stackoverflow.com/questions"
+                    }
+                }
+            }
+        ],
+        "contexts": {
+            "root": {
+                "props": {
+                    "id": "string('global')",
+                    "websiteName": "string('Stack Overflow')",
+                    "url": "string(//html/head/meta[@property='og:url']/@content)"
+                },
+                "children": [
+                    "questions"
+                ]
+            },
+            "questions": {
+                "selector": "div.s-post-summary",
+                "props": {
+                    "id": "string(@data-post-id)",
+                    "title": "string(.//h3/a)",
+                    "url": "string(.//h3/a/@href)",
+                    "excerpt": "string(.//div[@class='s-post-summary--content-excerpt'])",
+                    "votes": "normalize-space(.//div[contains(@class, 's-post-summary--stats-item__emphasized')]/span[1])",
+                    "answers": "normalize-space(.//div[@class='s-post-summary--stats-item'][2]//span[@class='s-post-summary--stats-item-number'])",
+                    "views": "normalize-space(.//div[@class='s-post-summary--stats-item'][3]//span[@class='s-post-summary--stats-item-number'])",
+                    "author": "normalize-space(.//div[contains(@class, 's-user-card--info')]//a)",
+                    "authorProfile": "concat('https://stackoverflow.com', string(.//div[contains(@class, 's-user-card--info')]//a/@href))",
+                    "authorReputation": "string(.//li[@class='s-user-card--rep']/span)",
+                    "askedTime": "string(.//time/@title)"
+                }
+            }
+        }
+    },
+    {
+        "id": "sui-forum",
+        "parserType": "json",
+        "targets": [
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "forums.sui.io"
+                    }
+                }
+            }
+        ],
+        "contexts": {
+            "root": {
+                "props": {
+                    "id": "string('global')",
+                    "websiteName": "string('Discourse')",
+                    "url": "string(//html/head/meta[@property='og:url']/@content)"
+                },
+                "children": [
+                    "topics",
+                    "posts"
+                ]
+            },
+            "topics": {
+                "selector": "tbody.topic-list-body > tr",
+                "props": {
+                    "id": "string(@data-topic-id)",
+                    "title": "string(.//td[contains(@class, 'main-link')]//a[@class='title'])",
+                    "category": "string(.//a[contains(@class, 'badge-category')]//span[@class='badge-category__name'])",
+                    "link": "concat('https://forums.sui.io', string(.//td[contains(@class, 'main-link')]//a[@class='title']/@href))",
+                    "replies": "string(.//td[contains(@class, 'posts')]//span[@class='number'])",
+                    "views": "string(.//td[contains(@class, 'views')]//span[@class='number'])",
+                    "lastActivity": "string(.//td[contains(@class, 'activity')]//span[@class='relative-date'])"
+                }
+            },
+            "posts": {
+                "selector": "article",
+                "props": {
+                    "id": "string(@data-post-id)",
+                    "authorUsername": "string(.//div[@class='names']/span/a)",
+                    "authorImg": "string(.//div[@class='post-avatar']//img/@src)",
+                    "createdAt": "string(.//div[@class='post-info post-date']/a/span/@title)",
+                    "text": "string(.//div[@class='cooked'])",
+                    "likes": "string(.//button[contains(@class, 'like-count')])",
+                    "url": "concat('https://forums.sui.io', string(.//div[@class='post-info post-date']/a/@href))"
+                }
+            }
+        }
+    }
+]

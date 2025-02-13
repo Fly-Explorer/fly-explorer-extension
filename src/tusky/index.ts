@@ -2,10 +2,11 @@ import { Upload } from 'tus-js-client'
 import { config } from 'dotenv'
 
 config()
-const tus_api = process.env.TUS_API
-const key = process.env.TUSKY_API_KEY
-const defaultVaultId = process.env.DEFAULT_VAULT_ID
-const defaultParentId = process.env.DEFAULT_PARENT_ID
+
+const tus_api = "https://api.tusky.io"
+const key = "0eccf2a3-0be1-471e-a6d2-ab24da6678a3"
+const defaultVaultId = "f216f492-9426-4fb5-9b17-8c226806d498"
+const defaultParentId = "45c6c728-6e0d-4260-8c2e-1bb25d285874"
 
 function generateRandomString(length: number): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -53,8 +54,8 @@ export async function uploadFile(
     console.log('TUS_API or TUSKY_API_KEY is not set')
     throw new Error('TUS_API or TUSKY_API_KEY is not set')
   }
-  const folder = await checkUserFolder(folderName)
-  console.log(folder)
+  // const folder = await checkUserFolder(folderName)
+  // console.log(folder)
   const jsonBlob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' })
 
   console.log('Uploading file...')
@@ -68,7 +69,8 @@ export async function uploadFile(
       filename: `${generateRandomString(10)}.json`,
       filetype: 'application/json',
       vaultId: defaultVaultId, // ID of the vault where the file will be stored
-      parentId: folder.id, // ID of the folder where the file will be stored
+      // parentId: folder.id, // ID of the folder where the file will be stored
+      parentId: defaultParentId
     },
     uploadSize: jsonBlob.size,
     onError: (error) => {

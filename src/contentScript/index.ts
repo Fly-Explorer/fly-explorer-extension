@@ -184,33 +184,85 @@ async function main() {
             }
         ],
         "contexts": {
-        "root": {
-            "props": {
-                "id": "string('global')",
-                "websiteName": "string('Stack Overflow')",
-                "url": "string(//html/head/meta[@property='og:url']/@content)"
+            "root": {
+                "props": {
+                    "id": "string('global')",
+                    "websiteName": "string('Stack Overflow')",
+                    "url": "string(//html/head/meta[@property='og:url']/@content)"
+                },
+                "children": [
+                    "questions"
+                ]
             },
-            "children": [
-                "questions"
-            ]
-        },
-        "questions": {
-            "selector": "div.s-post-summary",
-            "props": {
-                "id": "string(@data-post-id)",
-                "title": "string(.//h3/a)",
-                "url": "string(.//h3/a/@href)",
-                "excerpt": "string(.//div[@class='s-post-summary--content-excerpt'])",
-                "votes": "normalize-space(.//div[contains(@class, 's-post-summary--stats-item__emphasized')]/span[1])",
-                "answers": "normalize-space(.//div[@class='s-post-summary--stats-item'][2]//span[@class='s-post-summary--stats-item-number'])",
-                "views": "normalize-space(.//div[@class='s-post-summary--stats-item'][3]//span[@class='s-post-summary--stats-item-number'])",
-                "author": "normalize-space(.//div[contains(@class, 's-user-card--info')]//a)",
-                "authorProfile": "concat('https://stackoverflow.com', string(.//div[contains(@class, 's-user-card--info')]//a/@href))",
-                "authorReputation": "string(.//li[@class='s-user-card--rep']/span)",
-                "askedTime": "string(.//time/@title)"
+            "questions": {
+                "selector": "div.s-post-summary",
+                "props": {
+                    "id": "string(@data-post-id)",
+                    "title": "string(.//h3/a)",
+                    "url": "string(.//h3/a/@href)",
+                    "excerpt": "string(.//div[@class='s-post-summary--content-excerpt'])",
+                    "votes": "normalize-space(.//div[contains(@class, 's-post-summary--stats-item__emphasized')]/span[1])",
+                    "answers": "normalize-space(.//div[@class='s-post-summary--stats-item'][2]//span[@class='s-post-summary--stats-item-number'])",
+                    "views": "normalize-space(.//div[@class='s-post-summary--stats-item'][3]//span[@class='s-post-summary--stats-item-number'])",
+                    "author": "normalize-space(.//div[contains(@class, 's-user-card--info')]//a)",
+                    "authorProfile": "concat('https://stackoverflow.com', string(.//div[contains(@class, 's-user-card--info')]//a/@href))",
+                    "authorReputation": "string(.//li[@class='s-user-card--rep']/span)",
+                    "askedTime": "string(.//time/@title)"
+                }
             }
         }
-    }
+    },
+    {
+        "id": "sui-forum",
+        "parserType": "json",
+        "targets": [
+            {
+                "namespace": "engine",
+                "contextType": "website",
+                "if": {
+                    "id": {
+                        "eq": "forums.sui.io"
+                    }
+                }
+            }
+        ],
+        "contexts": {
+            "root": {
+                "props": {
+                    "id": "string('global')",
+                    "websiteName": "string('Discourse')",
+                    "url": "string(//html/head/meta[@property='og:url']/@content)"
+                },
+                "children": [
+                    "topics",
+                    "posts"
+                ]
+            },
+            "topics": {
+                "selector": "tbody.topic-list-body > tr",
+                "props": {
+                    "id": "string(@data-topic-id)",
+                    "title": "string(.//td[contains(@class, 'main-link')]//a[@class='title'])",
+                    "category": "string(.//a[contains(@class, 'badge-category')]//span[@class='badge-category__name'])",
+                    "link": "concat('https://forums.sui.io', string(.//td[contains(@class, 'main-link')]//a[@class='title']/@href))",
+                    "replies": "string(.//td[contains(@class, 'posts')]//span[@class='number'])",
+                    "views": "string(.//td[contains(@class, 'views')]//span[@class='number'])",
+                    "lastActivity": "string(.//td[contains(@class, 'activity')]//span[@class='relative-date'])"
+                }
+            },
+            "posts": {
+                "selector": "article",
+                "props": {
+                    "id": "string(@data-post-id)",
+                    "authorUsername": "string(.//div[@class='names']/span/a)",
+                    "authorImg": "string(.//div[@class='post-avatar']//img/@src)",
+                    "createdAt": "string(.//div[@class='post-info post-date']/a/span/@title)",
+                    "text": "string(.//div[@class='cooked'])",
+                    "likes": "string(.//button[contains(@class, 'like-count')])",
+                    "url": "concat('https://forums.sui.io', string(.//div[@class='post-info post-date']/a/@href))"
+                }
+            }
+        }
     }
 ]
 `)

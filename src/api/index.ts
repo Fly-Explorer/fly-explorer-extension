@@ -1,7 +1,4 @@
-import { config } from 'dotenv'
-
-config()
-const BASE_URL = process.env.FLYFISH_API_URL;
+const BASE_URL = "https://flyfish.weminal.xyz";
 
 export async function sendMessage(text: string) {
   try {

@@ -1,0 +1,52 @@
+{
+    "id": "sui-forum",
+    "parserType": "json",
+    "targets": [
+        {
+            "namespace": "engine",
+            "contextType": "website",
+            "if": {
+                "id": {
+                    "eq": "forums.sui.io"
+                }
+            }
+        }
+    ],
+    "contexts": {
+        "root": {
+            "props": {
+                "id": "string('global')",
+                "websiteName": "string('Discourse')",
+                "url": "string(//html/head/meta[@property='og:url']/@content)"
+            },
+            "children": [
+                "topics",
+                "posts"
+            ]
+        },
+        "topics": {
+            "selector": "tbody.topic-list-body > tr",
+            "props": {
+                "id": "string(@data-topic-id)",
+                "title": "string(.//td[contains(@class, 'main-link')]//a[@class='title'])",
+                "category": "string(.//a[contains(@class, 'badge-category')]//span[@class='badge-category__name'])",
+                "link": "concat('https://forums.sui.io', string(.//td[contains(@class, 'main-link')]//a[@class='title']/@href))",
+                "replies": "string(.//td[contains(@class, 'posts')]//span[@class='number'])",
+                "views": "string(.//td[contains(@class, 'views')]//span[@class='number'])",
+                "lastActivity": "string(.//td[contains(@class, 'activity')]//span[@class='relative-date'])"
+            }
+        },
+        "posts": {
+            "selector": "article",
+            "props": {
+                "id": "string(@data-post-id)",
+                "authorUsername": "string(.//div[@class='names']/span/a)",
+                "authorImg": "string(.//div[@class='post-avatar']//img/@src)",
+                "createdAt": "string(.//div[@class='post-info post-date']/a/span/@title)",
+                "text": "string(.//div[@class='cooked'])",
+                "likes": "string(.//button[contains(@class, 'like-count')])",
+                "url": "concat('https://forums.sui.io', string(.//div[@class='post-info post-date']/a/@href))"
+            }
+        }
+    }
+}
