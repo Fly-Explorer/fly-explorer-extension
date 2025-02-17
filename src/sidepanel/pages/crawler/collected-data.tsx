@@ -522,7 +522,7 @@ export const CollectedData: React.FC = () => {
                 marginBottom: '10px'
               }}
             >
-              Upload to Walrus
+              Upload
             </AnimatedButton>
 
             {uploadResponse && (

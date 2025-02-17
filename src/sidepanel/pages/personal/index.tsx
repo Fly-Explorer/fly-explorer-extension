@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 export const Chat = () => {
   const [flyName, setFlyName] = React.useState('');
   const [flyInterests, setFlyInterests] = React.useState('');
-  const [suiAddress, setSuiAddress] = React.useState('');
+  const [movementAddress, setMovementAddress] = React.useState('');
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
   useEffect(() => {
@@ -20,9 +20,9 @@ export const Chat = () => {
       }
     });
 
-    chrome.storage.local.get(['suiAddress'], (result) => {
-      if (result.suiAddress) {
-        setSuiAddress(result.suiAddress);
+    chrome.storage.local.get(['movementAddress'], (result) => {
+      if (result.movementAddress) {
+        setMovementAddress(result.movementAddress);
       }
     });
   }, []);
@@ -37,9 +37,9 @@ export const Chat = () => {
     });
 
     chrome.storage.local.set({
-      suiAddress: suiAddress
+      movementAddress: movementAddress
     }, () => {
-      console.log('Sui address saved:', suiAddress);
+      console.log('Movement address saved:', movementAddress);
     });
   }
 
@@ -54,13 +54,13 @@ export const Chat = () => {
 
       <div className="form-container">
         <div className="input-group animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <label className="input-label text-center">Sui Address</label>
+          <label className="input-label text-center">Movement Address</label>
           <input
             type="text"
-            value={suiAddress}
-            onChange={(e) => setSuiAddress(e.target.value)}
+            value={movementAddress}
+            onChange={(e) => setMovementAddress(e.target.value)}
             className="text-input"
-            placeholder="Enter sui address"
+            placeholder="Enter movement address"
           />
         </div>
 
