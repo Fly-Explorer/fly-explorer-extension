@@ -346,6 +346,73 @@ const SuccessCard = styled(CustomCard)`
   }
 `
 
+const StickyContainer = styled.div`
+  position: sticky;
+  top: 16px;
+  z-index: 10;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(8px);
+  margin-bottom: 20px;
+`
+
+const ScrollableContent = styled.div`
+  overflow-y: auto;
+  height: calc(100vh - 280px);
+  padding: 0 4px;
+  margin-right: -4px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(78, 205, 196, 0.3);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(78, 205, 196, 0.5);
+    }
+  }
+`
+
+const StyledTreeSelect = styled(TreeSelect)`
+  .ant-select-selector {
+    border-radius: 10px !important;
+    border: 1px solid rgba(78, 205, 196, 0.2) !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: rgba(78, 205, 196, 0.4) !important;
+      background: white !important;
+    }
+  }
+
+  &.ant-select-focused .ant-select-selector {
+    border-color: #4ecdc4 !important;
+    box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2) !important;
+  }
+`
+
+const PageHeader = styled(Typography.Title)`
+  &.ant-typography {
+    font-size: 24px;
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 24px !important;
+  }
+`
+
 export const CollectedData: React.FC = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -442,8 +509,8 @@ export const CollectedData: React.FC = () => {
   console.log("Selected indices", selectedData)
 
   return (
-    <StyledLayout style={{ padding: 16 }}>
-      <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+    <StyledLayout style={{ padding: 24 }}>
+      <Space direction="vertical" size="small" style={{ display: 'flex' }}>
         {parsers?.length ? (
           <Space direction="vertical" size="small" style={{ display: 'flex' }}>
             <ParserHeader style={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -458,188 +525,221 @@ export const CollectedData: React.FC = () => {
               </Typography.Title>
               <Button
                 type="link"
-                iconPosition="start"
-                style={{ padding: 0 }}
+                style={{
+                  color: '#4ecdc4',
+                  fontWeight: 500,
+                  padding: '4px 12px',
+                  borderRadius: '6px',
+                  transition: 'all 0.3s ease',
+                }}
                 onClick={() => setIsCodeEditorOpened((val) => !val)}
               >
                 {isCodeEditorOpened ? 'Hide parser' : 'Edit scheme'}
               </Button>
             </ParserHeader>
 
-            {isCodeEditorOpened ? (
+            {isCodeEditorOpened && (
               <CodeEditor
                 parserConfig={parsers[0]}
                 saveParserConfig={saveLocalParserConfig}
                 isLocalParserSaving={isLocalParserSaving}
               />
-            ) : null}
+            )}
           </Space>
         ) : null}
 
         <Space direction="vertical" size="small" style={{ display: 'flex' }}>
-          <Typography.Title level={4} style={{ margin: '0' }}>
-            Collected Data
-          </Typography.Title>
-          <Flex vertical gap="small">
-            <AnimatedButton
-              block
-              type="primary"
-              onClick={async () => {
-                try {
-                  await uploadFile(
-                    selectedData.map(node => node.parsedContext) as unknown as JSON,
-                    suiAddress,
-                    (percentage) => {
-                      console.log('Upload progress:', percentage)
-                    },
-                    (upload) => {
-                      console.log('Upload complete:', upload)
-                      setSelectedData([])
-                      setUploadResponse({
-                        url: upload.url ?? '',
-                        options: upload.options
-                      })
-                    },
-                    () => {
-                      console.error('Upload failed')
-                      setUploadResponse(null)
-                    }
-                  )
-                } catch (error) {
-                  console.error('Error uploading:', error)
-                  setUploadResponse(null)
-                }
-              }}
-              disabled={selectedData.length === 0}
-              style={{
-                background: 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
-                border: 'none',
-                color: 'white',
-                fontWeight: '500',
-                height: '40px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(78, 205, 196, 0.2)',
-                marginBottom: '10px'
-              }}
-            >
-              Upload
-            </AnimatedButton>
-
-            {uploadResponse && (
-              <SuccessCard>
-                <Typography.Title level={5} style={{
-                  color: '#9333ea',
-                  marginBottom: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <span style={{
-                    display: 'inline-block',
-                    width: '8px',
-                    height: '8px',
-                    background: '#a855f7',
-                    borderRadius: '50%',
-                    animation: 'pulse 2s ease-in-out infinite'
-                  }}></span>
-                  Upload Success
-                </Typography.Title>
-                <Grid>
-                  <DataItem>
-                    <span className="label">Vault URL</span>
-                    <a
-                      className="value"
-                      href={`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: '#9333ea', textDecoration: 'none' }}
-                    >
-                      {`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
-                    </a>
-                  </DataItem>
-                  {uploadResponse.options && (
-                    <DataItem>
-                      <span className="label">Metadata</span>
-                      <span className="value">
-                        {uploadResponse.options.metadata ?
-                          Object.entries(uploadResponse.options.metadata).map(([key, value]) =>
-                            `${key}: ${value}`
-                          ).join('\n')
-                          : 'No metadata'
-                        }
-                      </span>
-                    </DataItem>
-                  )}
-                </Grid>
-              </SuccessCard>
-            )}
-
-            <TreeSelect
-              style={{ width: '100%', marginBottom: '10px' }}
-              value={contextTypes}
-              dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-              treeData={contextTypesTree}
-              placeholder="Please select"
-              treeDefaultExpandAll
-              onChange={handleContextTypeChange}
-              multiple
-            />
-            <TreeTraverser
-              node={contextTree}
-              component={({ node }) => {
-                if (!contextTypes.includes(node.contextType) && contextTypes.length > 0) return null
-                const isSelected = selectedData.some(selectedNode => selectedNode.id === node.id)
-
-                return (
-                  <CustomCard
-                    onClick={() => {
-                      if (isSelected) {
-                        setSelectedData(prev => prev.filter(n => n.id !== node.id))
-                      } else {
-                        setSelectedData(prev => [...prev, node])
+          <PageHeader level={4} style={{ marginBottom: '12px' }}>Collected Data</PageHeader>
+          <Flex vertical gap={8}>
+            <StickyContainer>
+              <AnimatedButton
+                block
+                type="primary"
+                onClick={async () => {
+                  try {
+                    await uploadFile(
+                      selectedData.map(node => node.parsedContext) as unknown as JSON,
+                      suiAddress,
+                      (percentage) => {
+                        console.log('Upload progress:', percentage)
+                      },
+                      (upload) => {
+                        console.log('Upload complete:', upload)
+                        setSelectedData([])
+                        setUploadResponse({
+                          url: upload.url ?? '',
+                          options: upload.options
+                        })
+                      },
+                      () => {
+                        console.error('Upload failed')
+                        setUploadResponse(null)
                       }
-                    }}
-                    className={isSelected ? 'selected' : ''}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <Flex justify="space-between" align="center" style={{ marginBottom: '8px' }}>
-                      <Typography.Text strong style={{
-                        color: isSelected ? '#45b8ac' : 'inherit',
-                        transition: 'color 0.3s ease'
-                      }}>
-                        {node.contextType}
-                      </Typography.Text>
-                      <SelectButton
-                        size="small"
-                        className={isSelected ? 'selected' : ''}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isSelected) {
-                            setSelectedData(prev => prev.filter(n => n.id !== node.id))
-                          } else {
-                            setSelectedData(prev => [...prev, node])
-                          }
-                        }}
+                    )
+                  } catch (error) {
+                    console.error('Error uploading:', error)
+                    setUploadResponse(null)
+                  }
+                }}
+                disabled={selectedData.length === 0}
+                style={{
+                  background: 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
+                  border: 'none',
+                  color: 'white',
+                  fontWeight: '600',
+                  height: '44px',
+                  borderRadius: '10px',
+                  boxShadow: '0 4px 15px rgba(78, 205, 196, 0.25)',
+                  marginBottom: '12px',
+                  fontSize: '15px',
+                }}
+              >
+                {selectedData.length > 0
+                  ? `Upload ${selectedData.length} item${selectedData.length > 1 ? 's' : ''}`
+                  : 'Upload'
+                }
+              </AnimatedButton>
+
+              {uploadResponse && (
+                <SuccessCard style={{ marginBottom: '12px' }}>
+                  <Flex justify="space-between" align="center">
+                    <Typography.Title level={5} style={{
+                      color: '#9333ea',
+                      marginBottom: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '8px',
+                        height: '8px',
+                        background: '#a855f7',
+                        borderRadius: '50%',
+                        animation: 'pulse 2s ease-in-out infinite'
+                      }}></span>
+                      Upload Success
+                    </Typography.Title>
+                    <Button
+                      type="text"
+                      size="small"
+                      onClick={() => setUploadResponse(null)}
+                      style={{
+                        color: '#9333ea',
+                        opacity: 0.7,
+                        transition: 'opacity 0.3s ease',
+                        padding: '4px 8px',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
+                    >
+                      ✕
+                    </Button>
+                  </Flex>
+                  <Grid>
+                    <DataItem>
+                      <span className="label">Vault URL</span>
+                      <a
+                        className="value"
+                        href={`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#9333ea', textDecoration: 'none' }}
                       >
-                        {isSelected ? 'Selected' : 'Select'}
-                      </SelectButton>
-                    </Flex>
-                    <Grid>
+                        {`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
+                      </a>
+                    </DataItem>
+                    {uploadResponse.options && (
                       <DataItem>
-                        <span className="label">ID</span>
-                        <span className="value">{node.id}</span>
+                        <span className="label">Metadata</span>
+                        <span className="value">
+                          {uploadResponse.options.metadata ?
+                            Object.entries(uploadResponse.options.metadata).map(([key, value]) =>
+                              `${key}: ${value}`
+                            ).join('\n')
+                            : 'No metadata'
+                          }
+                        </span>
                       </DataItem>
-                      {Object.entries(node.parsedContext).map(([key, value]: [string, any]) => (
-                        <DataItem key={key}>
-                          <span className="label">{key}</span>
-                          <span className="value">{value}</span>
+                    )}
+                  </Grid>
+                </SuccessCard>
+              )}
+              <StyledTreeSelect
+                style={{ width: '100%', marginBottom: '12px' }}
+                value={contextTypes}
+                dropdownStyle={{
+                  maxHeight: 400,
+                  overflow: 'auto',
+                  borderRadius: '10px',
+                  padding: '8px',
+                }}
+                treeData={contextTypesTree}
+                placeholder="Filter by type..."
+                treeDefaultExpandAll
+                onChange={handleContextTypeChange}
+                multiple
+              />
+            </StickyContainer>
+
+            <ScrollableContent>
+              <TreeTraverser
+                node={contextTree}
+                component={({ node }) => {
+                  if (!contextTypes.includes(node.contextType) && contextTypes.length > 0) return null
+                  const isSelected = selectedData.some(selectedNode => selectedNode.id === node.id)
+
+                  return (
+                    <CustomCard
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedData(prev => prev.filter(n => n.id !== node.id))
+                        } else {
+                          setSelectedData(prev => [...prev, node])
+                        }
+                      }}
+                      className={isSelected ? 'selected' : ''}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <Flex justify="space-between" align="center" style={{ marginBottom: '8px' }}>
+                        <Typography.Text strong style={{
+                          color: isSelected ? '#45b8ac' : 'inherit',
+                          transition: 'color 0.3s ease'
+                        }}>
+                          {node.contextType}
+                        </Typography.Text>
+                        <SelectButton
+                          size="small"
+                          className={isSelected ? 'selected' : ''}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isSelected) {
+                              setSelectedData(prev => prev.filter(n => n.id !== node.id))
+                            } else {
+                              setSelectedData(prev => [...prev, node])
+                            }
+                          }}
+                        >
+                          {isSelected ? 'Selected' : 'Select'}
+                        </SelectButton>
+                      </Flex>
+                      <Grid>
+                        <DataItem>
+                          <span className="label">ID</span>
+                          <span className="value">{node.id}</span>
                         </DataItem>
-                      ))}
-                    </Grid>
-                  </CustomCard>
-                )
-              }}
-            />
+                        {Object.entries(node.parsedContext).map(([key, value]: [string, any]) => (
+                          <DataItem key={key}>
+                            <span className="label">{key}</span>
+                            <span className="value">{value}</span>
+                          </DataItem>
+                        ))}
+                      </Grid>
+                    </CustomCard>
+                  )
+                }}
+              />
+            </ScrollableContent>
           </Flex>
         </Space>
       </Space>
