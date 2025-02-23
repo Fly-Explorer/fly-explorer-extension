@@ -1,4 +1,4 @@
-const BASE_URL = "https://flyfish.weminal.xyz";
+const BASE_URL = "https://flyfish-movement.weminal.xyz";
 
 export async function sendMessage(text: string) {
   try {
@@ -6,7 +6,7 @@ export async function sendMessage(text: string) {
     formData.append('text', text);
     formData.append('user', 'user');
 
-    const response = await fetch(`${BASE_URL}/2cd8f9e3-d62e-0d8a-b20e-981b21e355c6/message`, {
+    const response = await fetch(`${BASE_URL}/026c9a66-ed85-09a6-bc7a-bd19a03e211c/message`, {
       method: 'POST',
       body: formData,
     });
