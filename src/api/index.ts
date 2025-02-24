@@ -1,5 +1,9 @@
 const BASE_URL = "https://flyfish-movement.weminal.xyz";
 
+export interface MessageResponse {
+
+}
+
 export async function sendMessage(text: string) {
   try {
     const formData = new FormData();
