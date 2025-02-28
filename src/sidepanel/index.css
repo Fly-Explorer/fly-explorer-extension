@@ -26,3 +26,16 @@ body {
   min-width: 20rem;
   margin: 0;
 }
+
+#app {
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+  -webkit-scrollbar-color: transparent transparent;
+  -webkit-scrollbar-width: none;
+  -webkit-scrollbar-height: none;
+  -webkit-scrollbar-track: none;
+  -webkit-scrollbar-thumb: none;
+  -webkit-scrollbar-corner: none;
+}
