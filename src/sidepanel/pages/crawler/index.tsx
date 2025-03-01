@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import React, { FC } from 'react'
+import * as React from 'react'
 import { Navigate } from 'react-router-dom'
 import ContentScript from '../../../contentScript/content-script'
 import { Layout } from '../../components/layout'
 import { Typography } from 'antd'
 
-export const Default: FC = () => {
+export const Default: React.FC = () => {
   const { data: parsers, isLoading } = useQuery({
     queryKey: ['getSuitableParserConfigs'],
     queryFn: ContentScript.getSuitableParserConfigs,

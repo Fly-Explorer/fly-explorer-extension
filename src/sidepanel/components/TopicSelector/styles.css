@@ -1,0 +1,169 @@
+/* Select Options styles */
+.topic-selector-wrapper {
+  width: 100%;
+  position: relative;
+}
+
+.select-container {
+  position: relative;
+  width: 100%;
+  user-select: none;
+  z-index: 100;
+}
+
+.select-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.select-field:hover {
+  border-color: #4ecdc4;
+  box-shadow: 0 0 0 1px rgba(78, 205, 196, 0.2);
+}
+
+.placeholder {
+  color: #999;
+}
+
+.selected-value {
+  font-weight: 500;
+  color: #333;
+}
+
+.arrow-icon {
+  font-size: 10px;
+  color: #666;
+  transition: transform 0.2s ease;
+}
+
+.arrow-icon.open {
+  transform: rotate(180deg);
+}
+
+.select-dropdown::-webkit-scrollbar {
+  display: none;
+}
+
+.select-dropdown {
+  position: absolute;
+  width: 100%;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  scrollbar-width: none; /* Ẩn trên Firefox */
+  -ms-overflow-style: none; 
+  border: 1px solid #eee;
+  left: 0;
+  top: 10px;
+}
+
+.select-dropdown.top {
+  /* bottom: calc(100% + 5px); */
+  /* top: auto; */
+}
+
+.select-dropdown.bottom {
+  top: calc(100% + 10px);
+}
+
+.dropdown-spacer {
+  width: 100%;
+  overflow: hidden;
+}
+
+.select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.select-option:hover {
+  background-color: rgba(78, 205, 196, 0.1);
+}
+
+.select-option.selected {
+  background-color: rgba(78, 205, 196, 0.2);
+  font-weight: 500;
+}
+
+.option-text {
+  flex: 1;
+}
+
+.check-icon {
+  color: #4ecdc4;
+  font-weight: bold;
+}
+
+.select-option.add-custom {
+  border-top: 1px dashed #eee;
+  color: #4ecdc4;
+  font-weight: 500;
+}
+
+.custom-option-container {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-top: 1px solid #eee;
+}
+
+.custom-option-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.custom-option-input:focus {
+  outline: none;
+  border-color: #4ecdc4;
+  box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+}
+
+.custom-option-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.custom-option-button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-option-button.add {
+  background-color: #4ecdc4;
+  color: white;
+}
+
+.custom-option-button.add:hover {
+  background-color: #3db9b0;
+}
+
+.custom-option-button.cancel {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.custom-option-button.cancel:hover {
+  background-color: #eee;
+} 
