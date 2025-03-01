@@ -475,20 +475,20 @@ export const CollectedData: React.FC = () => {
             Close
           </Button>,
         ]}
-        width={320}
+        width="80%"
         style={{ top: 20 }}
-        bodyStyle={{ padding: '12px', maxHeight: '60vh', overflowY: 'auto' }}
+        bodyStyle={{ padding: '0px', maxHeight: '80vh', overflowY: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {currentItem && (
-          <Grid>
-            <DataItem>
+          <Grid style={{ padding: '0px' }}>
+            <DataItem style={{ fontSize: '12px', padding: '0px' }}>
               <span className="label">ID</span>
-              <span className="value" style={{ fontSize: '12px' }}>{currentItem.id}</span>
+              <span className="value" style={{ fontSize: '10px' }}>{currentItem.id}</span>
             </DataItem>
             {Object.entries(currentItem.parsedContext).map(([key, value]: [string, any]) => (
               <DataItem key={key}>
                 <span className="label">{key}</span>
-                <span className="value" style={{ fontSize: '12px' }}>
+                <span className="value" style={{ fontSize: '10px' }}>
                   {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                 </span>
               </DataItem>
