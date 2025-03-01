@@ -3,14 +3,14 @@ import './index.css'
 import { BlurText } from '../../components/BlurText';
 import { useNavigate } from 'react-router-dom';
 import TopicSelector from '../../components/TopicSelector';
-import MovementAddressInput from '../../components/MovementAddressInput';
+import AddressInput from '../../components/AddressInput';
 import FinishButton from '../../components/FinishButton';
 import useStorage from '../../hooks/useStorage';
 
 export const Chat = () => {
   const [isVisible, setIsVisible] = useState(false);
   const { value: selectedTopic, setValue: setSelectedTopic } = useStorage<string>('selectedTopic', '');
-  const { value: movementAddress, setValue: setMovementAddress } = useStorage<string>('movementAddress', '');
+  const { value: address, setValue: setAddress } = useStorage<string>('address', '');
   const { value: flyInterests, setValue: setFlyInterests } = useStorage<string>('flyInterests', '');
   const [dropdownHeight, setDropdownHeight] = useState(0);
   
@@ -26,7 +26,7 @@ export const Chat = () => {
   };
 
   const handleAddressChange = (address: string) => {
-    setMovementAddress(address);
+    setAddress(address);
   };
 
   const handleFinish = () => {
@@ -38,9 +38,9 @@ export const Chat = () => {
     });
 
     chrome.storage.local.set({
-      movementAddress: movementAddress
+      address: address
     }, () => {
-      console.log('Movement address saved:', movementAddress);
+      console.log('Address saved:', address);
     });
     
     chrome.storage.local.set({
@@ -68,9 +68,9 @@ export const Chat = () => {
 
       <div className="form-container">
         <div className="input-group animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <label className="input-label text-center">Movement Address</label>
-          <MovementAddressInput 
-            value={movementAddress} 
+          <label className="input-label text-center">Address</label>
+          <AddressInput 
+            value={address} 
             onChange={handleAddressChange} 
           />
         </div>
@@ -86,7 +86,7 @@ export const Chat = () => {
 
         <FinishButton 
           onClick={handleFinish} 
-          disabled={!selectedTopic || !movementAddress}
+          disabled={!selectedTopic || !address}
           spacerHeight={dropdownHeight}
         />
       </div>

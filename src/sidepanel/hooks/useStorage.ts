@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-type StorageKey = 'flyInterests' | 'movementAddress' | 'selectedTopic';
+type StorageKey = 'flyInterests' | 'address' | 'selectedTopic';
 
 export function useStorage<T>(key: StorageKey, initialValue: T) {
   const [value, setValue] = useState<T>(initialValue);

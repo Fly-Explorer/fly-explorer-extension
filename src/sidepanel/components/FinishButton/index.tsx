@@ -1,5 +1,6 @@
 import React from 'react';
 import './styles.css';
+import useStorage from '../../hooks/useStorage';
 
 interface FinishButtonProps {
   onClick: () => void;
@@ -12,6 +13,7 @@ export const FinishButton: React.FC<FinishButtonProps> = ({
   disabled = false,
   spacerHeight = 0
 }) => {
+  const { value: selectedTopic } = useStorage<string>('selectedTopic', '');
   return (
     <>
       <button 
@@ -21,7 +23,7 @@ export const FinishButton: React.FC<FinishButtonProps> = ({
           animationDelay: '0.8s',
           marginTop: 0
         }}
-        disabled={disabled}
+        disabled={disabled || !selectedTopic}
       >
         <span>Finish</span>
       </button>
