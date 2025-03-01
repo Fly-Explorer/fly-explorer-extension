@@ -2,38 +2,39 @@ import React, { useState, useEffect } from 'react'
 import './index.css'
 import { BlurText } from '../../components/BlurText';
 import { useNavigate } from 'react-router-dom';
+import TopicSelector from '../../components/TopicSelector';
+import MovementAddressInput from '../../components/MovementAddressInput';
+import FinishButton from '../../components/FinishButton';
+import useStorage from '../../hooks/useStorage';
 
 export const Chat = () => {
-  const [flyName, setFlyName] = React.useState('');
-  const [flyInterests, setFlyInterests] = React.useState('');
-  const [movementAddress, setMovementAddress] = React.useState('');
   const [isVisible, setIsVisible] = useState(false);
+  const { value: selectedTopic, setValue: setSelectedTopic } = useStorage<string>('selectedTopic', '');
+  const { value: movementAddress, setValue: setMovementAddress } = useStorage<string>('movementAddress', '');
+  const { value: flyInterests, setValue: setFlyInterests } = useStorage<string>('flyInterests', '');
+  const [dropdownHeight, setDropdownHeight] = useState(0);
+  
   const navigate = useNavigate();
+  
   useEffect(() => {
     // Trigger animations after component mount
     setIsVisible(true);
-
-    // Load saved interests from storage
-    chrome.storage.local.get(['flyInterests'], (result) => {
-      if (result.flyInterests) {
-        setFlyInterests(result.flyInterests);
-      }
-    });
-
-    chrome.storage.local.get(['movementAddress'], (result) => {
-      if (result.movementAddress) {
-        setMovementAddress(result.movementAddress);
-      }
-    });
   }, []);
 
-  const handleClick = () => {
+  const handleTopicChange = (topic: string) => {
+    setSelectedTopic(topic);
+  };
+
+  const handleAddressChange = (address: string) => {
+    setMovementAddress(address);
+  };
+
+  const handleFinish = () => {
     // Save to Chrome extension storage
     chrome.storage.local.set({
       flyInterests: flyInterests
     }, () => {
       console.log('Interests saved:', flyInterests);
-      navigate('/default');
     });
 
     chrome.storage.local.set({
@@ -41,7 +42,20 @@ export const Chat = () => {
     }, () => {
       console.log('Movement address saved:', movementAddress);
     });
-  }
+    
+    chrome.storage.local.set({
+      selectedTopic: selectedTopic
+    }, () => {
+      console.log('Selected topic saved:', selectedTopic);
+      navigate('/default');
+    });
+    navigate('/default');
+  };
+
+  // Callback function to get dropdown height from TopicSelector
+  const handleDropdownHeightChange = (height: number) => {
+    setDropdownHeight(height);
+  };
 
   return (
     <div className={`fly-container ${isVisible ? 'visible' : ''}`}>
@@ -55,40 +69,26 @@ export const Chat = () => {
       <div className="form-container">
         <div className="input-group animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <label className="input-label text-center">Movement Address</label>
-          <input
-            type="text"
-            value={movementAddress}
-            onChange={(e) => setMovementAddress(e.target.value)}
-            className="text-input"
-            placeholder="Enter movement address"
+          <MovementAddressInput 
+            value={movementAddress} 
+            onChange={handleAddressChange} 
           />
         </div>
 
-        {/* <div className="input-group animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <label className="input-label text-center">Interest Name</label>
-          <input
-            type="text"
-            value={flyName}
-            onChange={(e) => setFlyName(e.target.value)}
-            className="text-input"
-            placeholder="Enter research name..."
-          />
-        </div> */}
-
-        <div className="input-group animate-slide-up" style={{ animationDelay: '0.6s' }}>
-          <label className="input-label text-center">Topics of Interest</label>
-          <textarea
-            value={flyInterests}
-            onChange={(e) => setFlyInterests(e.target.value)}
-            className="text-area"
-            placeholder="Describe what content you're interested in..."
-            rows={4}
+        <div className="input-group animate-slide-up" style={{ animationDelay: '0.4s', position: 'relative' }}>
+          <label className="input-label text-center">Topic of Interest</label>
+          <TopicSelector 
+            selectedTopic={selectedTopic} 
+            onTopicChange={handleTopicChange}
+            onDropdownHeightChange={handleDropdownHeightChange}
           />
         </div>
 
-        <button onClick={handleClick} className="create-button animate-slide-up" style={{ animationDelay: '0.8s' }}>
-          <span>Finish</span>
-        </button>
+        <FinishButton 
+          onClick={handleFinish} 
+          disabled={!selectedTopic || !movementAddress}
+          spacerHeight={dropdownHeight}
+        />
       </div>
     </div>
   )

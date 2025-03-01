@@ -1,53 +1,55 @@
 # Flyfish Extension 🐟
 
-A browser extension that empowers users to collect, filter, and store web data in the decentralized storage system, creating a personalized knowledge base for the **Flyfish Agent**.
+A browser extension that empowers users to collect, filter, and store web data in the decentralized storage system, creating a personalized knowledge base for the **Flyfish Agent** - a core component of the AI-powered InfoFi ecosystem.
 
 ## Overview
 
-The Flyfish Extension is a core component of the **Flyfish ecosystem** that provides:
+The Flyfish Extension is a crucial component of the **Flyfish ecosystem** that enables:
 
-- Seamless **web data collection** and extraction
-- Customizable **content filtering** capabilities with support of **FlyFish Agent**
-- Secure **decentralized storage**
-- Direct integration with the **Flyfish chat** interface for data access
+- 🎯 **User-Controlled Data Collection** - Selectively capture and save valuable web content
+- 🔐 **Decentralized Storage Integration** - Secure, per-address data isolation
+- 🤖 **AI-Powered Processing** - Direct integration with Flyfish Agent for intelligent data processing
 
 ## Key Features
 
-### Data Collection
-- Extract **structured** and **unstructured data** from any website
-- Support for multiple data formats and content types
-- **Real-time** data capture through the browser interface
+### Data Collection & Analysis
+- Extract **structured** from any website
+- Support for multiple data formats including Web3-specific content
+- Market-driven content valuation and prioritization
 
-### Content Filtering
-- **Advanced filtering** mechanisms based on user-defined criteria with support of **FlyFish Agent**
+### AI-Powered Filtering
+- **Advanced filtering** mechanisms powered by **Flyfish Agent**
+- Intelligent content categorization and organization
+- Market-validated data processing
 
 ### Decentralized Storage
-- Seamless integration with the decentralized storage system
+- Seamless integration with decentralized storage systems
 - Secure **per-address data isolation**
-
-### Data Organization
-- Each **address** maintains an isolated data folder
-- **Personalized** storage structure for individual users
+- Privacy-preserving data management
 
 ### Data Format
 ![dataset]()
 
 The system supports:
-- Structured and unstructured JSON data
+- Structured JSON data
+- Web3-specific data formats
 - Flexible schema design
-- Custom data formats based on agent requirements
+- Custom formats for AI agent processing
 
 ## Ecosystem Integration
 
-Flyfish Extension is part of a comprehensive ecosystem:
+Flyfish Extension is a key component of the comprehensive InfoFi ecosystem:
 
 - [**Flyfish Chat**]()
   - Web interface for data interaction
+  - Market-driven insights visualization
+  - Interactive knowledge graph exploration
 
 - [**Flyfish Agent**]()
-  - **Advanced data processing** capabilities
-  - **AI-powered** analysis
+  - **AI-powered** analysis and processing
+  - Market-validated query execution
   - Automated information extraction
+  - Movement Blockchain integration
 
 ## License
 

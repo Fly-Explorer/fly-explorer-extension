@@ -38,11 +38,12 @@ const ActionButtons = styled(Flex)`
 `
 
 const ParserHeader = styled(Flex)`
-  padding: 16px;
+  padding: 5px;
   background: rgba(255, 255, 255, 0.8);
-  border-radius: 10px;
+  border-radius: 5px;
+  border-bottom: 1px solid #4ecdc4;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   backdrop-filter: blur(8px);
   transition: all 0.3s ease;
 
@@ -53,8 +54,30 @@ const ParserHeader = styled(Flex)`
 `
 
 const StyledLayout = styled(AntdLayout)`
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: transparent;
   min-height: 100vh;
+  width: 100%;
+  overflow-y: auto;
+  scrollbar-height: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(78, 205, 196, 0.3);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(78, 205, 196, 0.5);
+    }
+  }
 `
 
 const SelectButton = styled(Button)`
@@ -168,14 +191,13 @@ const SuccessCard = styled(CustomCard)`
 
 const StickyContainer = styled.div`
   position: sticky;
-  top: 16px;
+  top: 10px;
   z-index: 10;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
-  padding: 16px;
+  background: transparent;
+  padding: 5px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(8px);
-  margin-bottom: 20px;
 `
 
 const ScrollableContent = styled.div`
@@ -225,11 +247,11 @@ const StyledTreeSelect = styled(TreeSelect)`
 
 const PageHeader = styled(Typography.Title)`
   &.ant-typography {
-    font-size: 24px;
+    font-size: 16px;
     background: linear-gradient(135deg, #2c3e50, #3498db);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 24px !important;
+    margin-bottom: 12px !important;
   }
 `
 
