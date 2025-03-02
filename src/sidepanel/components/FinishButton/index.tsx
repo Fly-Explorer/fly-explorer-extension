@@ -10,10 +10,8 @@ interface FinishButtonProps {
 
 export const FinishButton: React.FC<FinishButtonProps> = ({
   onClick,
-  disabled = false,
   spacerHeight = 0
 }) => {
-  const { value: selectedTopic } = useStorage<string>('selectedTopic', '');
   return (
     <>
       <button 
@@ -23,7 +21,6 @@ export const FinishButton: React.FC<FinishButtonProps> = ({
           animationDelay: '0.8s',
           marginTop: 0
         }}
-        disabled={disabled || !selectedTopic}
       >
         <span>Finish</span>
       </button>

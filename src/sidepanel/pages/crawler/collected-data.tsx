@@ -1,6 +1,6 @@
 import { ParserConfig } from '../../../core'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { generateRandomString, uploadFile, uploadFileToGroup } from '../../../pinata'
+import * as Pinata from '../../../pinata'
 import {
   Layout as AntdLayout,
   Button,
@@ -14,7 +14,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClonedContextNode } from '../../../common/types'
-import { getNameFromId } from '../../../utils'
+import { getNameFromId, getUserDataIid } from '../../../utils'
 import CodeEditor from '../../components/CodeEditor'
 import { Layout } from '../../components/layout'
 import { TreeTraverser } from '../../components/tree-traverser'
@@ -36,7 +36,11 @@ import {
   ScrollableContent,
   StyledTreeSelect,
   PageHeader,
+  PulseDot
 } from '../../components/CollectedData/styles'
+import useStorage from '../../hooks/useStorage'
+import showToast from '../../../utils/toast'
+import { GroupResponseItem } from 'pinata-web3'
 
 type ContextTypeTree = {
   value: string
@@ -72,19 +76,37 @@ export const CollectedData: React.FC = () => {
   } | null>(null)
   const [contextTypes, setContextTypes] = useState<string[]>([])
   const [isCodeEditorOpened, setIsCodeEditorOpened] = useState(false)
-  const [address, setAddress] = useState<string>('')
   const [modalVisible, setModalVisible] = useState(false)
   const [currentItem, setCurrentItem] = useState<ClonedContextNode | null>(null)
-  const [selectedTopic, setSelectedTopic] = useState<string>('Aptos')
+
+  const [address, setAddress] = useState<string | null>(null)
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
+  const [groups, setGroups] = useState<GroupResponseItem | null>(null)
+  const [loadingUpload, setLoadingUpload] = useState<boolean>(false)
 
   useEffect(() => {
     chrome.storage.local.get('address').then((result) => {
-      setAddress(result.address || '')
+      setAddress(result.address || null)
     })
+
     chrome.storage.local.get('selectedTopic').then((result) => {
-      setSelectedTopic(result.selectedTopic || 'Aptos')
+      setSelectedTopic(result.selectedTopic || null)
     })
   }, [])
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (address && selectedTopic) {
+        const groups = await Pinata.getGroupPinata(getUserDataIid(selectedTopic, address))
+        console.log('🚀 ~ fetchGroups ~ groups:', groups)
+        chrome.storage.local.set({
+          groups: groups,
+        })
+        setGroups(groups[0])
+      }
+    }
+    fetchGroups()
+  }, [address, selectedTopic])
 
   const { data: contextTree } = useQuery({
     queryFn: ContentScript.getContextTree,
@@ -171,6 +193,52 @@ export const CollectedData: React.FC = () => {
     setModalVisible(true)
   }
 
+  const handleCreateGroup = async () => {
+    await Pinata.createGroup(getUserDataIid(selectedTopic!, address!)).then((group) => {
+      setGroups(group)
+      chrome.storage.local.set({
+        groups: group,
+      })
+    })
+  }
+
+  const handleUploadFile = async () => {
+    console.log('Groups Data:', groups)
+    try {
+      await Pinata.uploadFileToGroup(
+        selectedData.map((node) => node.parsedContext) as unknown as JSON,
+        selectedTopic!,
+        groups!.id,
+      ).then((upload) => {
+        console.log('🚀 ~ handleUploadFile ~ upload:', upload)
+        showToast.success('Upload successfully!')
+        setSelectedData([])
+      })
+    } catch (error) {
+      console.error('Error uploading:', error)
+      showToast.error('Failed to upload!')
+      setUploadResponse(null)
+    }
+  }
+
+  const handleUploadClick = async () => {
+    setLoadingUpload(true)
+    try {
+      if (!groups) {
+        await handleCreateGroup().then(() => {
+          handleUploadFile()
+        })
+      } else {
+        handleUploadFile()
+      }
+    } catch (error) {
+      console.error('Error creating group:', error)
+      showToast.error('An error occurred!')
+    } finally {
+      setLoadingUpload(false)
+    }
+  }
+
   return (
     <StyledLayout>
       <Space direction="vertical" size="small" style={{ display: 'flex' }}>
@@ -221,19 +289,13 @@ export const CollectedData: React.FC = () => {
               <AnimatedButton
                 block
                 type="primary"
-                onClick={async () => {
-                  try {
-                    await uploadFileToGroup(
-                      selectedData.map((node) => node.parsedContext) as unknown as JSON,
-                      `${selectedTopic}-${generateRandomString(10)}`,
-                    )
-                  } catch (error) {
-                    console.error('Error uploading:', error)
-                    setUploadResponse(null)
-                  }
-                }}
+                onClick={handleUploadClick}
+                loading={loadingUpload}
                 style={{
-                  background: 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
+                  background: loadingUpload 
+                    ? 'linear-gradient(135deg, #4ecdc4, #45b8ac, #4ecdc4)' 
+                    : 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
+                  backgroundSize: loadingUpload ? '200% 200%' : '100% 100%',
                   border: 'none',
                   color: 'white',
                   fontWeight: '600',
@@ -244,12 +306,38 @@ export const CollectedData: React.FC = () => {
                   fontSize: '14px',
                 }}
               >
-                {selectedData.length > 0
-                  ? `Upload ${selectedData.length} item${selectedData.length > 1 ? 's' : ''}`
-                  : 'Upload'}
+                {loadingUpload 
+                  ? 'Uploading...' 
+                  : selectedData.length > 0
+                    ? `Upload ${selectedData.length} item${selectedData.length > 1 ? 's' : ''}`
+                    : 'Upload'}
               </AnimatedButton>
 
-              {uploadResponse && (
+              {loadingUpload && (
+                <SuccessCard style={{ marginBottom: '8px', padding: '10px' }}>
+                  <Flex justify="space-between" align="center">
+                    <Typography.Title
+                      level={5}
+                      style={{
+                        color: '#45b8ac',
+                        marginBottom: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '14px',
+                      }}
+                    >
+                      <PulseDot />
+                      Đang tải dữ liệu lên...
+                    </Typography.Title>
+                  </Flex>
+                  <Typography.Text style={{ fontSize: '12px', color: '#666' }}>
+                    Vui lòng đợi trong khi chúng tôi đang xử lý dữ liệu của bạn.
+                  </Typography.Text>
+                </SuccessCard>
+              )}
+
+              {/* {uploadResponse && !loadingUpload && (
                 <SuccessCard style={{ marginBottom: '8px', padding: '10px' }}>
                   <Flex justify="space-between" align="center">
                     <Typography.Title
@@ -306,7 +394,7 @@ export const CollectedData: React.FC = () => {
                     </DataItem>
                   </Grid>
                 </SuccessCard>
-              )}
+              )} */}
               <StyledTreeSelect
                 style={{ width: '100%', marginBottom: '8px' }}
                 value={contextTypes}
@@ -426,7 +514,7 @@ export const CollectedData: React.FC = () => {
                             style={{
                               padding: '2px 8px',
                               fontSize: '12px',
-                              color: '#4ecdc4',
+                              color: '#2f302f',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
