@@ -13,7 +13,6 @@ export const getNameFromId = (id: string) => {
 
 export const getUserDataIid = (topic: string, address: string) => {
   const slice = address.slice(-10)
-  console.log("🚀 ~ getUserDataIid ~ slice:", slice)
 
   return `${topic}-${slice}`
 }

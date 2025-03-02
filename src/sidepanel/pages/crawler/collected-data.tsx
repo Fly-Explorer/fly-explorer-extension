@@ -36,9 +36,8 @@ import {
   ScrollableContent,
   StyledTreeSelect,
   PageHeader,
-  PulseDot
+  PulseDot,
 } from '../../components/CollectedData/styles'
-import useStorage from '../../hooks/useStorage'
 import showToast from '../../../utils/toast'
 import { GroupResponseItem } from 'pinata-web3'
 
@@ -81,7 +80,7 @@ export const CollectedData: React.FC = () => {
 
   const [address, setAddress] = useState<string | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
-  const [groups, setGroups] = useState<GroupResponseItem | null>(null)
+  const [groups, setGroups] = useState<GroupResponseItem[] | GroupResponseItem | null>(null)
   const [loadingUpload, setLoadingUpload] = useState<boolean>(false)
 
   useEffect(() => {
@@ -98,7 +97,6 @@ export const CollectedData: React.FC = () => {
     const fetchGroups = async () => {
       if (address && selectedTopic) {
         const groups = await Pinata.getGroupPinata(getUserDataIid(selectedTopic, address))
-        console.log('🚀 ~ fetchGroups ~ groups:', groups)
         chrome.storage.local.set({
           groups: groups,
         })
@@ -194,50 +192,82 @@ export const CollectedData: React.FC = () => {
   }
 
   const handleCreateGroup = async () => {
-    await Pinata.createGroup(getUserDataIid(selectedTopic!, address!)).then((group) => {
-      setGroups(group)
-      chrome.storage.local.set({
-        groups: group,
-      })
+    const group = await Pinata.createGroup(getUserDataIid(selectedTopic!, address!))
+    setGroups(group)
+    chrome.storage.local.set({
+      groups: group,
     })
+    return group
   }
 
-  const handleUploadFile = async () => {
-    console.log('Groups Data:', groups)
-    try {
-      await Pinata.uploadFileToGroup(
-        selectedData.map((node) => node.parsedContext) as unknown as JSON,
-        selectedTopic!,
-        groups!.id,
-      ).then((upload) => {
-        console.log('🚀 ~ handleUploadFile ~ upload:', upload)
-        showToast.success('Upload successfully!')
-        setSelectedData([])
-      })
-    } catch (error) {
-      console.error('Error uploading:', error)
-      showToast.error('Failed to upload!')
-      setUploadResponse(null)
+  const handleUploadFile = async (data: any, fileName: string, groupId: string) => {
+    if (!data || !fileName || !groupId) {
+      throw new Error('Thiếu thông tin cần thiết để tải lên');
     }
-  }
+    
+    try {
+      const upload = await Pinata.uploadFileToGroup(data, fileName, groupId);
+      console.log('Upload result:', upload);
+      showToast.success('Tải lên thành công!');
+      setSelectedData([]);
+      return upload;
+    } catch (error) {
+      console.error('Error uploading:', error);
+      throw new Error('Không thể tải lên tệp');
+    }
+  };
 
   const handleUploadClick = async () => {
-    setLoadingUpload(true)
+    if (loadingUpload) return; // Tránh click nhiều lần
+    
+    setLoadingUpload(true);
+    
     try {
+      if (!selectedData.length) {
+        showToast.warning('Vui lòng chọn ít nhất một mục để tải lên');
+        return;
+      }
+      
+      if (!selectedTopic) {
+        showToast.error('Không tìm thấy chủ đề đã chọn');
+        return;
+      }
+      
+      let groupId: string;
+      
       if (!groups) {
-        await handleCreateGroup().then(() => {
-          handleUploadFile()
-        })
+        try {
+          const newGroup = await handleCreateGroup();
+          if (!newGroup) {
+            throw new Error('Không thể tạo nhóm mới');
+          }
+          groupId = newGroup.id;
+        } catch (error) {
+          console.error('Error creating group:', error);
+          showToast.error('Không thể tạo nhóm mới');
+          return;
+        }
       } else {
-        handleUploadFile()
+        groupId = Array.isArray(groups) ? groups[0].id : groups.id;
+      }
+      
+      try {
+        await handleUploadFile(
+          selectedData.map((node) => node.parsedContext) as unknown as JSON,
+          selectedTopic,
+          groupId
+        );
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        showToast.error('Không thể tải lên tệp');
       }
     } catch (error) {
-      console.error('Error creating group:', error)
-      showToast.error('An error occurred!')
+      console.error('Error in upload process:', error);
+      showToast.error('Đã xảy ra lỗi trong quá trình tải lên');
     } finally {
-      setLoadingUpload(false)
+      setLoadingUpload(false);
     }
-  }
+  };
 
   return (
     <StyledLayout>
@@ -290,12 +320,9 @@ export const CollectedData: React.FC = () => {
                 block
                 type="primary"
                 onClick={handleUploadClick}
-                loading={loadingUpload}
                 style={{
-                  background: loadingUpload 
-                    ? 'linear-gradient(135deg, #4ecdc4, #45b8ac, #4ecdc4)' 
-                    : 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
-                  backgroundSize: loadingUpload ? '200% 200%' : '100% 100%',
+                  background: 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
+                  backgroundSize: '100% 100%',
                   border: 'none',
                   color: 'white',
                   fontWeight: '600',
@@ -306,15 +333,21 @@ export const CollectedData: React.FC = () => {
                   fontSize: '14px',
                 }}
               >
-                {loadingUpload 
-                  ? 'Uploading...' 
+                {loadingUpload
+                  ? 'Uploading...'
                   : selectedData.length > 0
                     ? `Upload ${selectedData.length} item${selectedData.length > 1 ? 's' : ''}`
                     : 'Upload'}
               </AnimatedButton>
 
-              {loadingUpload && (
-                <SuccessCard style={{ marginBottom: '8px', padding: '10px' }}>
+              {/* {loadingUpload && (
+                <CustomCard style={{ 
+                  marginBottom: '8px', 
+                  padding: '10px',
+                  background: 'linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(69, 184, 172, 0.08))',
+                  border: 'none',
+                  boxShadow: '0 8px 32px rgba(78, 205, 196, 0.15)'
+                }}>
                   <Flex justify="space-between" align="center">
                     <Typography.Title
                       level={5}
@@ -327,15 +360,24 @@ export const CollectedData: React.FC = () => {
                         fontSize: '14px',
                       }}
                     >
-                      <PulseDot />
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: '6px',
+                          height: '6px',
+                          background: '#4ecdc4',
+                          borderRadius: '50%',
+                          animation: 'pulse 1.5s ease-in-out infinite',
+                        }}
+                      ></span>
                       Đang tải dữ liệu lên...
                     </Typography.Title>
                   </Flex>
                   <Typography.Text style={{ fontSize: '12px', color: '#666' }}>
                     Vui lòng đợi trong khi chúng tôi đang xử lý dữ liệu của bạn.
                   </Typography.Text>
-                </SuccessCard>
-              )}
+                </CustomCard>
+              )} */}
 
               {/* {uploadResponse && !loadingUpload && (
                 <SuccessCard style={{ marginBottom: '8px', padding: '10px' }}>

@@ -25,7 +25,6 @@ async function uploadFile(data: any, fileName: string) {
   try {
     const file = createFile(data, fileName)
     const upload = await pinata.upload.file(file)
-    console.log('🚀 ~ uploadFile ~ upload:', upload)
   } catch (error) {
     console.log(error)
   }
@@ -33,7 +32,6 @@ async function uploadFile(data: any, fileName: string) {
 
 async function getGroupPinata(groupName: string) {
   const groups  = await pinata.groups.list().name(groupName)
-  console.log("🚀 ~ getGroupPinata ~ groups:", groups)
   return groups;
 }
 // Group
@@ -42,7 +40,6 @@ async function createGroup(groupName: string) {
   const group = await pinata.groups.create({
     name: groupName,
   })
-  console.log('🚀 ~ createGroup ~ group:', group)
   return group;
 }
 

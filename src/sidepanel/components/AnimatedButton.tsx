@@ -44,11 +44,14 @@ export interface AnimatedButtonProps extends ButtonProps {
 // Component AnimatedButton
 export const AnimatedButton: React.FC<AnimatedButtonProps> = ({ 
   children, 
-  loading, 
+  loading = false, 
   ...props 
 }) => {
+  // Đảm bảo loading luôn là boolean
+  const isLoading = loading === true;
+  
   return (
-    <StyledButton $isLoading={loading} {...props}>
+    <StyledButton $isLoading={isLoading} loading={isLoading} {...props}>
       {children}
     </StyledButton>
   );
