@@ -202,18 +202,18 @@ export const CollectedData: React.FC = () => {
 
   const handleUploadFile = async (data: any, fileName: string, groupId: string) => {
     if (!data || !fileName || !groupId) {
-      throw new Error('Thiếu thông tin cần thiết để tải lên');
+      throw new Error('Missing required information to upload');
     }
     
     try {
       const upload = await Pinata.uploadFileToGroup(data, fileName, groupId);
       console.log('Upload result:', upload);
-      showToast.success('Tải lên thành công!');
+      showToast.success('Upload success!');
       setSelectedData([]);
       return upload;
     } catch (error) {
       console.error('Error uploading:', error);
-      throw new Error('Không thể tải lên tệp');
+      throw new Error('Upload failed');
     }
   };
 
@@ -224,12 +224,12 @@ export const CollectedData: React.FC = () => {
     
     try {
       if (!selectedData.length) {
-        showToast.warning('Vui lòng chọn ít nhất một mục để tải lên');
+        showToast.warning('Please select at least one item to upload');
         return;
       }
       
       if (!selectedTopic) {
-        showToast.error('Không tìm thấy chủ đề đã chọn');
+        showToast.error('Topic not found');
         return;
       }
       
@@ -239,12 +239,12 @@ export const CollectedData: React.FC = () => {
         try {
           const newGroup = await handleCreateGroup();
           if (!newGroup) {
-            throw new Error('Không thể tạo nhóm mới');
+            throw new Error('Create group failed');
           }
           groupId = newGroup.id;
         } catch (error) {
           console.error('Error creating group:', error);
-          showToast.error('Không thể tạo nhóm mới');
+          showToast.error('Create group failed');
           return;
         }
       } else {
@@ -259,11 +259,11 @@ export const CollectedData: React.FC = () => {
         );
       } catch (error) {
         console.error('Error uploading file:', error);
-        showToast.error('Không thể tải lên tệp');
+        showToast.error('Upload failed');
       }
     } catch (error) {
       console.error('Error in upload process:', error);
-      showToast.error('Đã xảy ra lỗi trong quá trình tải lên');
+      showToast.error('Upload failed');
     } finally {
       setLoadingUpload(false);
     }
