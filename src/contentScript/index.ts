@@ -124,10 +124,7 @@ async function main() {
         const rect = post.getBoundingClientRect()
         // If post is visible in viewport
         if (rect.top < window.innerHeight && rect.bottom > 0) {
-          // Mark posts before deleting them
           markPost(post)
-          // Optional: Add a delay before deletion to show the marking
-          // setTimeout(() => deletePost(post), 2000) // 2 second delay
         }
       })
     }
@@ -156,30 +153,6 @@ async function main() {
     //   return Promise.resolve(picker.pickElement())
     // }
   })
-
-  // Add post deletion functionality for Twitter
-  if (window.location.hostname.includes('twitter.com') ||
-    window.location.hostname.includes('x.com')) {
-
-    let lastScrollPosition = 0
-    const scrollThreshold = 1000
-
-    window.addEventListener('scroll', () => {
-      const currentPosition = window.scrollY
-      if (currentPosition - lastScrollPosition > scrollThreshold) {
-        lastScrollPosition = currentPosition
-
-        // Get all visible posts
-        const posts = document.querySelectorAll('div[data-testid="cellInnerDiv"]')
-        posts.forEach(post => {
-          const rect = post.getBoundingClientRect()
-          if (rect.top < window.innerHeight && rect.bottom > 0) {
-            // deletePost(post)
-          }
-        })
-      }
-    })
-  }
 }
 
 function cloneContextTree(tree: IContextNode): ClonedContextNode {

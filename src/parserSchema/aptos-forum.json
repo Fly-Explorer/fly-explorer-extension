@@ -1,0 +1,80 @@
+{
+    "id": "aptos-forum",
+    "parserType": "json",
+    "targets": [
+        {
+            "namespace": "engine",
+            "contextType": "website",
+            "if": {
+                "id": {
+                    "eq": "forum.aptosfoundation.org"
+                }
+            }
+        }
+    ],
+    "contexts": {
+        "root": {
+            "props": {
+                "id": "string('global')",
+                "websiteName": "string('Aptos Forum')",
+                "url": "string(//html/head/meta[@property='og:url']/@content)"
+            },
+            "children": [
+                "topics",
+                "posts",
+                "post_stream"
+            ]
+        },
+        "topics": {
+            "selector": "div.topic-area",
+            "props": {
+                "id": "string(@data-topic-id)",
+                "title": "string(.//div[@class='topic-meta-data']//a[contains(@class, 'title')]/text())",
+                "tags": "string(.//@class[contains(., 'category-')])",
+                "author": "string(.//div[@class='names']//a[contains(@href, '/u/')]/text())",
+                "content": "string(.//div[@class='cooked']/p/text())",
+                "replies": "number(.//span[contains(@class, 'post-action-menu__like-count')]/text())",
+                "last_post_time": "string(.//div[@class='post-info post-date']//a/span[@class='relative-date'])",
+                "url": "string(.//div[@class='topic-meta-data']//a[contains(@class, 'title')]/@href)",
+                "last_poster": "string(.//div[@class='post-info']//a[contains(@href, '/u/')])",
+                "is_pinned": "boolean(.//svg[contains(@class, 'd-icon-thumbtack')])"
+            }
+        },
+        "posts": {
+            "selector": "article.boxed.onscreen-post",
+            "props": {
+                "id": "string(@data-post-id)",
+                "topic_id": "string(@data-topic-id)",
+                "user_id": "string(@data-user-id)",
+                "content": "string(.//div[@class='cooked']/p)",
+                "author": {
+                    "username": "string(.//div[@class='names']//a[@data-user-card])",
+                    "profile_image": "string(.//a[@class='trigger-user-card main-avatar']/img/@src)"
+                },
+                "timestamp": "string(.//div[@class='post-info post-date']//a/span[@class='relative-date'])",
+                "likes": "number(.//button[contains(@class, 'post-action-menu__like-count')]/text())",
+                "post_url": "string(.//a[contains(@class, 'widget-link post-date')]/@href)",
+                "warnings": "array(.//div[@class='cooked']//p[contains(text(), 'scam') or contains(text(), 'phishing') or contains(text(), 'airdrop')]/text())",
+                "replies": {
+                    "selector": ".//button[contains(@class, 'show-replies')]",
+                    "props": {
+                        "id": "string(@data-post-id)",
+                        "user": "string(.//div[@class='names']//a[@data-user-card])",
+                        "content": "string(.//div[@class='cooked'])",
+                        "likes": "number(.//button[contains(@class, 'post-action-menu__like-count')]/text())"
+                    }
+                }
+            }
+        },
+        "post_stream": {
+            "selector": "div.post-stream",
+            "props": {
+                "posts": "array(.//article[contains(@class, 'topic-post')]/@data-post-id)",
+                "users": "array(.//article[contains(@class, 'topic-post')]//a[contains(@href, '/u/')]/text())",
+                "contents": "array(.//article[contains(@class, 'topic-post')]//div[@class='cooked']/p/text())",
+                "likes": "array(.//article[contains(@class, 'topic-post')]//button[contains(@class, 'post-action-menu__like-count')]/text())",
+                "timestamps": "array(.//article[contains(@class, 'topic-post')]//span[contains(@class, 'relative-date')]/text())"
+            }
+        }
+    }
+}

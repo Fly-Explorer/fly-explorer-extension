@@ -1,24 +1,3 @@
-import { throttle } from 'lodash'
-import { sendMessage } from '../api'
-
-export async function labelPost(post: Element) {
-  // Get the post text content
-  const tweetText = post.querySelector('[data-testid="tweetText"]')?.textContent?.toLowerCase() || ''
-
-  // label the post
-  const resp = await sendMessage(`label this post: ${tweetText}`)
-
-  return {
-    label: resp[1].params.label,
-    color: resp[1].params.color
-  }
-}
-
-// Create a throttled version of checkForScamIndicators
-const throttledCheck = throttle(async (post: Element) => {
-  return await labelPost(post)
-}, 2000)
-
 // Style constants
 const LABEL_STYLES = {
   base: {
@@ -105,129 +84,47 @@ function applyArticleStyles(article: Element, color: string): void {
   `);
 }
 
-export async function markPost(post: Element) {
-  try {
-    if (post.hasAttribute('data-marked') || post.querySelector('.data-label')) {
-      return;
-    }
-
-    const result = await throttledCheck(post);
-    const articleContainer = post.closest('article[data-testid="tweet"]');
-    if (!articleContainer) return;
-
-    // Create and style label
-    const labelElement = document.createElement('div');
-    labelElement.textContent = result.label;
-    labelElement.className = 'data-label';
-    applyLabelStyles(labelElement, result.color);
-
-    // Style article
-    (articleContainer as HTMLElement).style.position = 'relative';
-    applyArticleStyles(articleContainer, result.color);
-    articleContainer.setAttribute('data-marked', 'true');
-
-    // Add animations
-    document.head.appendChild(
-      createStyleElement(
-        LABEL_STYLES.animations.gradientBorder +
-        LABEL_STYLES.animations.safePulse(result.color)
-      )
-    );
-
-    articleContainer.insertBefore(labelElement, articleContainer.firstChild);
-  } catch (err) {
-    console.error('Error marking post:', err);
-  }
+function getRandomColor(): string {
+  const colors = [
+    '#FF6B6B',  // coral red
+    '#4ECDC4',  // turquoise
+    '#45B7D1',  // sky blue
+    '#96CEB4',  // sage green
+    '#FFEEAD',  // light yellow
+    '#D4A5A5',  // dusty rose
+    '#9B59B6',  // purple
+    '#3498DB',  // blue
+    '#E67E22',  // orange
+    '#2ECC71'   // green
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
 }
 
-// async function deletePost(postElement: Element) {
-//   try {
-//     // Add CSS for the Thanos effect
-//     const style = document.createElement('style')
-//     style.textContent = `
-//       @keyframes fadeAway {
-//         0% {
-//           opacity: 1;
-//         }
-//         100% {
-//           opacity: 0;
-//         }
-//       }
+export function markPost(post: Element) {
+  // Check if post is already marked by looking for our label or data-marked attribute
+  if (post.querySelector('.tweet-label') || post.getAttribute('data-marked') === 'true') {
+    return; // Skip if already marked
+  }
 
-//       .particle {
-//         position: absolute;
-//         background: currentColor;
-//         border-radius: 50%;
-//         pointer-events: none;
-//         z-index: 1000;
-//       }
+  const color = getRandomColor();
 
-//       @keyframes float {
-//         0% {
-//           transform: translate(0, 0) rotate(0deg);
-//         }
-//         100% {
-//           transform: translate(var(--tx), var(--ty)) rotate(var(--r));
-//           opacity: 0;
-//         }
-//       }
-//     `
-//     document.head.appendChild(style)
+  // Create and inject animation styles if not already present
+  if (!document.querySelector('#tweet-animations')) {
+    const animationStyles = createStyleElement(`
+      ${LABEL_STYLES.animations.gradientBorder}
+      ${LABEL_STYLES.animations.safePulse(color)}
+      ${LABEL_STYLES.animations.deleteEffects}
+    `);
+    animationStyles.id = 'tweet-animations';
+    document.head.appendChild(animationStyles);
+  }
 
-//     // Create particles
-//     const rect = postElement.getBoundingClientRect()
-//     const numParticles = 100
-//     const particles = []
+  // Apply styles to the post
+  applyArticleStyles(post, color);
 
-//     for (let i = 0; i < numParticles; i++) {
-//       const particle = document.createElement('div')
-//       particle.className = 'particle'
+  // Make sure post has relative positioning for absolute label positioning
+  post.setAttribute('style', post.getAttribute('style') + 'position: relative !important;');
 
-//       // Random position within the element
-//       const x = Math.random() * rect.width + rect.left
-//       const y = Math.random() * rect.height + rect.top
-
-//       // Random size between 2-6px
-//       const size = Math.random() * 4 + 2
-
-//       // Get the color at this position
-//       const color = window.getComputedStyle(postElement).color
-
-//       particle.style.cssText = `
-//         left: ${x}px;
-//         top: ${y}px;
-//         width: ${size}px;
-//         height: ${size}px;
-//         background: ${color};
-//         --tx: ${(Math.random() - 0.5) * 100}px;
-//         --ty: ${-Math.random() * 200}px;
-//         --r: ${Math.random() * 360}deg;
-//         animation: float 2s ease-out forwards;
-//       `
-
-//       document.body.appendChild(particle)
-//       particles.push(particle)
-//     }
-
-//     // Fade out the original element
-//     postElement.style.animation = 'fadeAway 2s forwards'
-
-//     // Clean up and rerun parser
-//     setTimeout(() => {
-//       particles.forEach(p => p.remove())
-//       postElement.remove()
-
-//       // Rerun parser for suitable parsers
-//       suitableParsers.forEach((p) => {
-//         try {
-//           core.detachParserConfig(p.id)
-//           core.attachParserConfig(p)
-//         } catch (err) {
-//           console.error('Error reattaching parser:', err)
-//         }
-//       })
-//     }, 2000)
-//   } catch (err) {
-//     console.error('Error removing post:', err)
-//   }
-// }
+  // Mark as processed
+  post.setAttribute('data-marked', 'true');
+}
