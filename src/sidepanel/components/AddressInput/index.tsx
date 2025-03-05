@@ -1,28 +1,28 @@
 import React from 'react';
 import './styles.css';
 
-interface MovementAddressInputProps {
+interface AddressInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
 }
 
-export const MovementAddressInput: React.FC<MovementAddressInputProps> = ({
+export const AddressInput: React.FC<AddressInputProps> = ({
   value,
   onChange,
-  placeholder = "Enter movement address"
+  placeholder = "Enter address..."
 }) => {
   return (
-    <div className="movement-address-input-wrapper">
+    <div className="address-input-wrapper">
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="movement-address-input"
+        className="address-input"
         placeholder={placeholder}
       />
     </div>
   );
 };
 
-export default MovementAddressInput; 
+export default AddressInput; 

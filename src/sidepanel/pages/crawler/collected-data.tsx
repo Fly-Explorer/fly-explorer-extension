@@ -1,5 +1,6 @@
 import { ParserConfig } from '../../../core'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import * as Pinata from '../../../pinata'
 import {
   Layout as AntdLayout,
   Button,
@@ -8,18 +9,18 @@ import {
   TreeSelect,
   Typography,
   Modal,
-  Tooltip
+  Tooltip,
 } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClonedContextNode } from '../../../common/types'
-import { getNameFromId } from '../../../utils'
+import { getNameFromId, getUserDataIid } from '../../../utils'
 import CodeEditor from '../../components/CodeEditor'
 import { Layout } from '../../components/layout'
 import { TreeTraverser } from '../../components/tree-traverser'
 import ContentScript from '../../../contentScript/content-script'
 import styled from 'styled-components'
-import { uploadFile } from '../../../tusky'
+// import { uploadFile } from '../../../tusky'
 import { UploadOptions } from 'tus-js-client'
 import { DataItem } from '../../components/DataItem'
 import { CustomCard } from '../../components/CustomCard'
@@ -34,8 +35,11 @@ import {
   StickyContainer,
   ScrollableContent,
   StyledTreeSelect,
-  PageHeader
+  PageHeader,
+  PulseDot,
 } from '../../components/CollectedData/styles'
+import showToast from '../../../utils/toast'
+import { GroupResponseItem } from 'pinata-web3'
 
 type ContextTypeTree = {
   value: string
@@ -65,18 +69,42 @@ export const CollectedData: React.FC = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [selectedData, setSelectedData] = useState<ClonedContextNode[]>([])
-  const [uploadResponse, setUploadResponse] = useState<{ url: string; options: UploadOptions } | null>(null)
+  const [uploadResponse, setUploadResponse] = useState<{
+    url: string
+    options: UploadOptions
+  } | null>(null)
   const [contextTypes, setContextTypes] = useState<string[]>([])
   const [isCodeEditorOpened, setIsCodeEditorOpened] = useState(false)
-  const [suiAddress, setSuiAddress] = useState<string>('')
   const [modalVisible, setModalVisible] = useState(false)
   const [currentItem, setCurrentItem] = useState<ClonedContextNode | null>(null)
 
+  const [address, setAddress] = useState<string | null>(null)
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
+  const [groups, setGroups] = useState<GroupResponseItem[] | GroupResponseItem | null>(null)
+  const [loadingUpload, setLoadingUpload] = useState<boolean>(false)
+
   useEffect(() => {
-    chrome.storage.local.get('suiAddress').then((result) => {
-      setSuiAddress(result.suiAddress || '')
+    chrome.storage.local.get('address').then((result) => {
+      setAddress(result.address || null)
+    })
+
+    chrome.storage.local.get('selectedTopic').then((result) => {
+      setSelectedTopic(result.selectedTopic || null)
     })
   }, [])
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (address && selectedTopic) {
+        const groups = await Pinata.getGroupPinata(getUserDataIid(selectedTopic, address))
+        chrome.storage.local.set({
+          groups: groups,
+        })
+        setGroups(groups[0])
+      }
+    }
+    fetchGroups()
+  }, [address, selectedTopic])
 
   const { data: contextTree } = useQuery({
     queryFn: ContentScript.getContextTree,
@@ -90,7 +118,7 @@ export const CollectedData: React.FC = () => {
     queryFn: ContentScript.getSuitableParserConfigs,
     refetchInterval: 1000,
   })
-  console.log("Parsers", parsers)
+  console.log('Parsers', parsers)
 
   const { mutate: saveLocalParserConfig, isPending: isLocalParserSaving } = useMutation({
     mutationFn: ContentScript.saveLocalParserConfig,
@@ -118,7 +146,7 @@ export const CollectedData: React.FC = () => {
 
   const contextTypesTree = useMemo(
     () => extractContextTypesTree(contextTree ? [contextTree] : []),
-    [contextTree]
+    [contextTree],
   )
 
   if (!contextTree) {
@@ -130,8 +158,8 @@ export const CollectedData: React.FC = () => {
   }
 
   const handleContextTypeChange = (value: unknown, _labelList: React.ReactNode[], _extra: any) => {
-    setContextTypes(value as string[]);
-  };
+    setContextTypes(value as string[])
+  }
 
   const handlePickElementClick = async () => {
     if (!parsers?.length) return
@@ -155,16 +183,94 @@ export const CollectedData: React.FC = () => {
     )
   }
 
-  console.log("Selected indices", selectedData)
+  console.log('Selected indices', selectedData)
 
   const openItemDetails = (node: ClonedContextNode, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentItem(node);
-    setModalVisible(true);
+    e.stopPropagation()
+    setCurrentItem(node)
+    setModalVisible(true)
+  }
+
+  const handleCreateGroup = async () => {
+    const group = await Pinata.createGroup(getUserDataIid(selectedTopic!, address!))
+    setGroups(group)
+    chrome.storage.local.set({
+      groups: group,
+    })
+    return group
+  }
+
+  const handleUploadFile = async (data: any, fileName: string, groupId: string) => {
+    if (!data || !fileName || !groupId) {
+      throw new Error('Missing required information to upload');
+    }
+    
+    try {
+      const upload = await Pinata.uploadFileToGroup(data, fileName, groupId);
+      console.log('Upload result:', upload);
+      showToast.success('Upload success!');
+      setSelectedData([]);
+      return upload;
+    } catch (error) {
+      console.error('Error uploading:', error);
+      throw new Error('Upload failed');
+    }
+  };
+
+  const handleUploadClick = async () => {
+    if (loadingUpload) return; // Tránh click nhiều lần
+    
+    setLoadingUpload(true);
+    
+    try {
+      if (!selectedData.length) {
+        showToast.warning('Please select at least one item to upload');
+        return;
+      }
+      
+      if (!selectedTopic) {
+        showToast.error('Topic not found');
+        return;
+      }
+      
+      let groupId: string;
+      
+      if (!groups) {
+        try {
+          const newGroup = await handleCreateGroup();
+          if (!newGroup) {
+            throw new Error('Create group failed');
+          }
+          groupId = newGroup.id;
+        } catch (error) {
+          console.error('Error creating group:', error);
+          showToast.error('Create group failed');
+          return;
+        }
+      } else {
+        groupId = Array.isArray(groups) ? groups[0].id : groups.id;
+      }
+      
+      try {
+        await handleUploadFile(
+          selectedData.map((node) => node.parsedContext) as unknown as JSON,
+          selectedTopic,
+          groupId
+        );
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        showToast.error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Error in upload process:', error);
+      showToast.error('Upload failed');
+    } finally {
+      setLoadingUpload(false);
+    }
   };
 
   return (
-    <StyledLayout >
+    <StyledLayout>
       <Space direction="vertical" size="small" style={{ display: 'flex' }}>
         {parsers?.length ? (
           <Space direction="vertical" size="small" style={{ display: 'flex' }}>
@@ -186,7 +292,7 @@ export const CollectedData: React.FC = () => {
                   padding: '2px 8px',
                   borderRadius: '6px',
                   transition: 'all 0.3s ease',
-                  fontSize: '13px'
+                  fontSize: '13px',
                 }}
                 onClick={() => setIsCodeEditorOpened((val) => !val)}
               >
@@ -205,41 +311,18 @@ export const CollectedData: React.FC = () => {
         ) : null}
 
         <Space direction="vertical" size="small" style={{ display: 'flex' }}>
-          <PageHeader level={5} style={{ marginBottom: '2px', marginTop: '2px' }}>Collected Data</PageHeader>
+          <PageHeader level={5} style={{ marginBottom: '2px', marginTop: '2px' }}>
+            Collected Data
+          </PageHeader>
           <Flex vertical gap="small">
             <StickyContainer>
               <AnimatedButton
                 block
                 type="primary"
-                onClick={async () => {
-                  try {
-                    await uploadFile(
-                      selectedData.map(node => node.parsedContext) as unknown as JSON,
-                      suiAddress,
-                      (percentage) => {
-                        console.log('Upload progress:', percentage)
-                      },
-                      (upload) => {
-                        console.log('Upload complete:', upload)
-                        setSelectedData([])
-                        setUploadResponse({
-                          url: upload.url ?? '',
-                          options: upload.options
-                        })
-                      },
-                      () => {
-                        console.error('Upload failed')
-                        setUploadResponse(null)
-                      }
-                    )
-                  } catch (error) {
-                    console.error('Error uploading:', error)
-                    setUploadResponse(null)
-                  }
-                }}
-                disabled={selectedData.length === 0}
+                onClick={handleUploadClick}
                 style={{
                   background: 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
+                  backgroundSize: '100% 100%',
                   border: 'none',
                   color: 'white',
                   fontWeight: '600',
@@ -250,31 +333,76 @@ export const CollectedData: React.FC = () => {
                   fontSize: '14px',
                 }}
               >
-                {selectedData.length > 0
-                  ? `Upload ${selectedData.length} item${selectedData.length > 1 ? 's' : ''}`
-                  : 'Upload'
-                }
+                {loadingUpload
+                  ? 'Uploading...'
+                  : selectedData.length > 0
+                    ? `Upload ${selectedData.length} item${selectedData.length > 1 ? 's' : ''}`
+                    : 'Upload'}
               </AnimatedButton>
 
-              {uploadResponse && (
+              {/* {loadingUpload && (
+                <CustomCard style={{ 
+                  marginBottom: '8px', 
+                  padding: '10px',
+                  background: 'linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(69, 184, 172, 0.08))',
+                  border: 'none',
+                  boxShadow: '0 8px 32px rgba(78, 205, 196, 0.15)'
+                }}>
+                  <Flex justify="space-between" align="center">
+                    <Typography.Title
+                      level={5}
+                      style={{
+                        color: '#45b8ac',
+                        marginBottom: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '14px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: '6px',
+                          height: '6px',
+                          background: '#4ecdc4',
+                          borderRadius: '50%',
+                          animation: 'pulse 1.5s ease-in-out infinite',
+                        }}
+                      ></span>
+                      Đang tải dữ liệu lên...
+                    </Typography.Title>
+                  </Flex>
+                  <Typography.Text style={{ fontSize: '12px', color: '#666' }}>
+                    Vui lòng đợi trong khi chúng tôi đang xử lý dữ liệu của bạn.
+                  </Typography.Text>
+                </CustomCard>
+              )} */}
+
+              {/* {uploadResponse && !loadingUpload && (
                 <SuccessCard style={{ marginBottom: '8px', padding: '10px' }}>
                   <Flex justify="space-between" align="center">
-                    <Typography.Title level={5} style={{
-                      color: '#9333ea',
-                      marginBottom: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '14px'
-                    }}>
-                      <span style={{
-                        display: 'inline-block',
-                        width: '6px',
-                        height: '6px',
-                        background: '#a855f7',
-                        borderRadius: '50%',
-                        animation: 'pulse 2s ease-in-out infinite'
-                      }}></span>
+                    <Typography.Title
+                      level={5}
+                      style={{
+                        color: '#9333ea',
+                        marginBottom: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '14px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: '6px',
+                          height: '6px',
+                          background: '#a855f7',
+                          borderRadius: '50%',
+                          animation: 'pulse 2s ease-in-out infinite',
+                        }}
+                      ></span>
                       Upload Success
                     </Typography.Title>
                     <Button
@@ -287,8 +415,8 @@ export const CollectedData: React.FC = () => {
                         transition: 'opacity 0.3s ease',
                         padding: '2px 6px',
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                      onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
                     >
                       ✕
                     </Button>
@@ -308,7 +436,7 @@ export const CollectedData: React.FC = () => {
                     </DataItem>
                   </Grid>
                 </SuccessCard>
-              )}
+              )} */}
               <StyledTreeSelect
                 style={{ width: '100%', marginBottom: '8px' }}
                 value={contextTypes}
@@ -330,98 +458,108 @@ export const CollectedData: React.FC = () => {
               <TreeTraverser
                 node={contextTree}
                 component={({ node }) => {
-                  if (!contextTypes.includes(node.contextType) && contextTypes.length > 0) return null
-                  const isSelected = selectedData.some(selectedNode => selectedNode.id === node.id)
-                  
+                  if (!contextTypes.includes(node.contextType) && contextTypes.length > 0)
+                    return null
+                  const isSelected = selectedData.some(
+                    (selectedNode) => selectedNode.id === node.id,
+                  )
+
                   // Lấy text từ parsedContext nếu có
-                  const mainText = node.parsedContext.text || node.parsedContext.title || node.parsedContext.name || '';
+                  const mainText =
+                    node.parsedContext.text ||
+                    node.parsedContext.title ||
+                    node.parsedContext.name ||
+                    ''
 
                   return (
                     <CustomCard
                       onClick={() => {
                         if (isSelected) {
-                          setSelectedData(prev => prev.filter(n => n.id !== node.id))
+                          setSelectedData((prev) => prev.filter((n) => n.id !== node.id))
                         } else {
-                          setSelectedData(prev => [...prev, node])
+                          setSelectedData((prev) => [...prev, node])
                         }
                       }}
                       className={isSelected ? 'selected' : ''}
-                      style={{ 
-                        cursor: 'pointer', 
-                        padding: '10px', 
+                      style={{
+                        cursor: 'pointer',
+                        padding: '10px',
                         marginBottom: '8px',
                         transition: 'all 0.2s ease',
                         border: '1px solid #eee',
                         borderRadius: '8px',
-                        boxShadow: isSelected ? '0 2px 8px rgba(78, 205, 196, 0.15)' : 'none'
+                        boxShadow: isSelected ? '0 2px 8px rgba(78, 205, 196, 0.15)' : 'none',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)'
                       }}
                       onMouseLeave={(e) => {
                         if (!isSelected) {
-                          e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.boxShadow = 'none'
                         } else {
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(78, 205, 196, 0.15)';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(78, 205, 196, 0.15)'
                         }
                       }}
                     >
                       <Flex justify="space-between" align="center" style={{ marginBottom: '6px' }}>
-                        <Typography.Text strong style={{
-                          color: isSelected ? '#45b8ac' : 'inherit',
-                          transition: 'color 0.3s ease',
-                          fontSize: '13px'
-                        }}>
+                        <Typography.Text
+                          strong
+                          style={{
+                            color: isSelected ? '#45b8ac' : 'inherit',
+                            transition: 'color 0.3s ease',
+                            fontSize: '13px',
+                          }}
+                        >
                           {node.contextType}
                         </Typography.Text>
                         <SelectButton
                           size="small"
                           className={isSelected ? 'selected' : ''}
-                          style={{ 
-                            padding: '2px 8px', 
+                          style={{
+                            padding: '2px 8px',
                             fontSize: '12px',
                             height: 'auto',
-                            borderRadius: '4px'
+                            borderRadius: '4px',
                           }}
                           onClick={(e) => {
-                            e.stopPropagation();
+                            e.stopPropagation()
                             if (isSelected) {
-                              setSelectedData(prev => prev.filter(n => n.id !== node.id))
+                              setSelectedData((prev) => prev.filter((n) => n.id !== node.id))
                             } else {
-                              setSelectedData(prev => [...prev, node])
+                              setSelectedData((prev) => [...prev, node])
                             }
                           }}
                         >
                           {isSelected ? 'Selected' : 'Select'}
                         </SelectButton>
                       </Flex>
-                      
+
                       {mainText && (
-                        <Typography.Paragraph 
+                        <Typography.Paragraph
                           ellipsis={{ rows: 2 }}
-                          style={{ 
-                            fontSize: '12px', 
+                          style={{
+                            fontSize: '12px',
                             margin: '0 0 6px 0',
-                            color: '#666'
+                            color: '#666',
                           }}
                         >
                           {mainText}
                         </Typography.Paragraph>
                       )}
-                      
+
                       <Flex justify="flex-end">
                         <Tooltip title="View details">
-                          <Button 
-                            type="text" 
+                          <Button
+                            type="text"
                             size="small"
                             onClick={(e) => openItemDetails(node, e)}
                             style={{
                               padding: '2px 8px',
                               fontSize: '12px',
-                              color: '#4ecdc4',
+                              color: '#2f302f',
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center'
+                              justifyContent: 'center',
                             }}
                           >
                             <span style={{ marginRight: '4px' }}>Details</span>
@@ -447,48 +585,56 @@ export const CollectedData: React.FC = () => {
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={[
-          <Button 
-            key="select" 
+          <Button
+            key="select"
             type="primary"
             style={{
-              background: selectedData.some(item => item.id === currentItem?.id) 
-                ? '#f5f5f5' 
+              background: selectedData.some((item) => item.id === currentItem?.id)
+                ? '#f5f5f5'
                 : 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
               border: 'none',
-              color: selectedData.some(item => item.id === currentItem?.id) ? '#333' : 'white',
+              color: selectedData.some((item) => item.id === currentItem?.id) ? '#333' : 'white',
               borderRadius: '6px',
-              fontWeight: '500'
+              fontWeight: '500',
             }}
             onClick={() => {
               if (currentItem) {
-                if (selectedData.some(item => item.id === currentItem.id)) {
-                  setSelectedData(prev => prev.filter(n => n.id !== currentItem.id));
+                if (selectedData.some((item) => item.id === currentItem.id)) {
+                  setSelectedData((prev) => prev.filter((n) => n.id !== currentItem.id))
                 } else {
-                  setSelectedData(prev => [...prev, currentItem]);
+                  setSelectedData((prev) => [...prev, currentItem])
                 }
               }
             }}
           >
-            {selectedData.some(item => item.id === currentItem?.id) ? 'Deselect' : 'Select'}
+            {selectedData.some((item) => item.id === currentItem?.id) ? 'Deselect' : 'Select'}
           </Button>,
           <Button key="close" onClick={() => setModalVisible(false)}>
             Close
           </Button>,
         ]}
-        width={320}
+        width="80%"
         style={{ top: 20 }}
-        bodyStyle={{ padding: '12px', maxHeight: '60vh', overflowY: 'auto' }}
+        bodyStyle={{
+          padding: '0px',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
       >
         {currentItem && (
-          <Grid>
-            <DataItem>
+          <Grid style={{ padding: '0px' }}>
+            <DataItem style={{ fontSize: '12px', padding: '0px' }}>
               <span className="label">ID</span>
-              <span className="value" style={{ fontSize: '12px' }}>{currentItem.id}</span>
+              <span className="value" style={{ fontSize: '10px' }}>
+                {currentItem.id}
+              </span>
             </DataItem>
             {Object.entries(currentItem.parsedContext).map(([key, value]: [string, any]) => (
               <DataItem key={key}>
                 <span className="label">{key}</span>
-                <span className="value" style={{ fontSize: '12px' }}>
+                <span className="value" style={{ fontSize: '10px' }}>
                   {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                 </span>
               </DataItem>

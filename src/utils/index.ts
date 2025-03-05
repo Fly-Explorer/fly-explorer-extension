@@ -10,3 +10,9 @@ export const getNameFromId = (id: string) => {
   const parts = id.split('/')
   return capitalizeWords(parts[parts.length - 1])
 }
+
+export const getUserDataIid = (topic: string, address: string) => {
+  const slice = address.slice(-10)
+
+  return `${topic}-${slice}`
+}

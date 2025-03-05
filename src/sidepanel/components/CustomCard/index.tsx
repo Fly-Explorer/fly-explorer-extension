@@ -15,12 +15,7 @@ export const CustomCard = styled.div`
     position: absolute;
     inset: 0;
     padding: 2px;
-    background: linear-gradient(
-      60deg,
-      #ff6b6b,
-      #4ecdc4,
-      #45b8ac
-    );
+    background-color: #ff6b6b;
     border-radius: 12px;
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,

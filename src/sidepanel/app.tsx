@@ -7,6 +7,9 @@ import ContentScript from '../contentScript/content-script'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Chat } from './pages/personal'
 import { Layout, Typography, Button } from 'antd'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
 export const App: React.FC = () => {
   const queryClient = useQueryClient()
 
@@ -63,6 +66,17 @@ export const App: React.FC = () => {
         <Route path="collected-data" Component={CollectedData} />
         <Route path="no-parsers" Component={NoParsers} />
       </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </MemoryRouter>
   )
 }

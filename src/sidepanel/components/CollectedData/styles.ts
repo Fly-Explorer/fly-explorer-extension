@@ -1,9 +1,24 @@
 import { Button, Flex, TreeSelect, Typography, Layout as AntdLayout } from 'antd'
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 import { AnimatedButton } from '../AnimatedButton'
 import { CustomCard } from '../CustomCard'
 import { DataItem } from '../DataItem'
 
+// Thêm keyframes cho animation pulse của điểm nhấp nháy
+const pulseDot = keyframes`
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+`
 
 const Grid = styled.div`
   display: grid;
@@ -92,7 +107,7 @@ const SelectButton = styled(Button)`
     font-weight: 600;
 
     &:hover {
-      background: linear-gradient(135deg, #4ecdc4, #45b8ac);
+      background: linear-gradient(135deg, #45b8ac, #4ecdc4);
       transform: translateY(-1px);
     }
   }
@@ -107,7 +122,9 @@ const SelectButton = styled(Button)`
     background: rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    transition: width 0.6s ease, height 0.6s ease;
+    transition:
+      width 0.6s ease,
+      height 0.6s ease;
   }
 
   &:hover::before {
@@ -118,7 +135,9 @@ const SelectButton = styled(Button)`
 
 const SuccessCard = styled(CustomCard)`
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.05), rgba(168, 85, 247, 0.08));
-  animation: slideDown 0.5s ease-out, pulse 2s ease-in-out infinite;
+  animation:
+    slideDown 0.5s ease-out,
+    pulse 2s ease-in-out infinite;
   border: none;
   margin-bottom: 24px;
   box-shadow: 0 8px 32px rgba(147, 51, 234, 0.15);
@@ -148,12 +167,7 @@ const SuccessCard = styled(CustomCard)`
 
   &::before {
     padding: 2px;
-    background: linear-gradient(
-      60deg,
-      #9333ea,
-      #a855f7,
-      #9333ea
-    );
+    background: linear-gradient(60deg, #9333ea, #a855f7, #9333ea);
   }
 
   ${DataItem} {
@@ -255,4 +269,26 @@ const PageHeader = styled(Typography.Title)`
   }
 `
 
-export { Grid, ActionButtons, ParserHeader, StyledLayout, SelectButton, SuccessCard, StickyContainer, ScrollableContent, StyledTreeSelect, PageHeader }
+// Thêm component PulseDot
+const PulseDot = styled.span`
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #4ecdc4;
+  border-radius: 50%;
+  animation: ${pulseDot} 1.5s ease-in-out infinite;
+`
+
+export {
+  Grid,
+  ActionButtons,
+  ParserHeader,
+  StyledLayout,
+  SelectButton,
+  SuccessCard,
+  StickyContainer,
+  ScrollableContent,
+  StyledTreeSelect,
+  PageHeader,
+  PulseDot,
+}

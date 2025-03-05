@@ -83,6 +83,7 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
 
   const handleTopicSelect = (topic: string) => {
     onTopicChange(topic);
+    chrome.storage.local.set({ selectedTopic: topic });
     setIsDropdownOpen(false);
     setDropdownHeight(0);
     if (onDropdownHeightChange) {
