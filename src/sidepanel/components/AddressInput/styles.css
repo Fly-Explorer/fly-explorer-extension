@@ -1,8 +1,8 @@
-.movement-address-input-wrapper {
+.address-input-wrapper {
   width: 100%;
 }
 
-.movement-address-input {
+.address-input {
   width: 100%;
   padding: 1rem;
   border: 1px solid #ddd;
@@ -12,7 +12,7 @@
   transition: all 0.3s ease;
 }
 
-.movement-address-input:focus {
+.address-input:focus {
   outline: none;
   border-color: #4ecdc4;
   box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
