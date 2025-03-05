@@ -49,7 +49,7 @@ Flyfish Extension is a key component of the comprehensive InfoFi ecosystem:
   - **AI-powered** analysis and processing
   - Market-validated query execution
   - Automated information extraction
-  - Movement Blockchain integration
+  - Aptos Blockchain integration
 
 ## License
 

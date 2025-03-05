@@ -25,4 +25,23 @@
 body {
   min-width: 20rem;
   margin: 0;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-color: transparent transparent;
+}
+
+body::-webkit-scrollbar {
+  display: none !important;
+}
+
+#app {
+  height: 100vh;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#app::-webkit-scrollbar {
+  display: none !important;
 }

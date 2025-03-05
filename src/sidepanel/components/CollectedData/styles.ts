@@ -1,9 +1,24 @@
 import { Button, Flex, TreeSelect, Typography, Layout as AntdLayout } from 'antd'
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 import { AnimatedButton } from '../AnimatedButton'
 import { CustomCard } from '../CustomCard'
 import { DataItem } from '../DataItem'
 
+// Thêm keyframes cho animation pulse của điểm nhấp nháy
+const pulseDot = keyframes`
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+`
 
 const Grid = styled.div`
   display: grid;
@@ -38,11 +53,12 @@ const ActionButtons = styled(Flex)`
 `
 
 const ParserHeader = styled(Flex)`
-  padding: 16px;
+  padding: 5px;
   background: rgba(255, 255, 255, 0.8);
-  border-radius: 10px;
+  border-radius: 5px;
+  border-bottom: 1px solid #4ecdc4;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   backdrop-filter: blur(8px);
   transition: all 0.3s ease;
 
@@ -53,8 +69,30 @@ const ParserHeader = styled(Flex)`
 `
 
 const StyledLayout = styled(AntdLayout)`
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: transparent;
   min-height: 100vh;
+  width: 100%;
+  overflow-y: auto;
+  scrollbar-height: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(78, 205, 196, 0.3);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(78, 205, 196, 0.5);
+    }
+  }
 `
 
 const SelectButton = styled(Button)`
@@ -69,7 +107,7 @@ const SelectButton = styled(Button)`
     font-weight: 600;
 
     &:hover {
-      background: linear-gradient(135deg, #4ecdc4, #45b8ac);
+      background: linear-gradient(135deg, #45b8ac, #4ecdc4);
       transform: translateY(-1px);
     }
   }
@@ -84,7 +122,9 @@ const SelectButton = styled(Button)`
     background: rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    transition: width 0.6s ease, height 0.6s ease;
+    transition:
+      width 0.6s ease,
+      height 0.6s ease;
   }
 
   &:hover::before {
@@ -95,7 +135,9 @@ const SelectButton = styled(Button)`
 
 const SuccessCard = styled(CustomCard)`
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.05), rgba(168, 85, 247, 0.08));
-  animation: slideDown 0.5s ease-out, pulse 2s ease-in-out infinite;
+  animation:
+    slideDown 0.5s ease-out,
+    pulse 2s ease-in-out infinite;
   border: none;
   margin-bottom: 24px;
   box-shadow: 0 8px 32px rgba(147, 51, 234, 0.15);
@@ -125,12 +167,7 @@ const SuccessCard = styled(CustomCard)`
 
   &::before {
     padding: 2px;
-    background: linear-gradient(
-      60deg,
-      #9333ea,
-      #a855f7,
-      #9333ea
-    );
+    background: linear-gradient(60deg, #9333ea, #a855f7, #9333ea);
   }
 
   ${DataItem} {
@@ -168,14 +205,13 @@ const SuccessCard = styled(CustomCard)`
 
 const StickyContainer = styled.div`
   position: sticky;
-  top: 16px;
+  top: 10px;
   z-index: 10;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
-  padding: 16px;
+  background: transparent;
+  padding: 5px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(8px);
-  margin-bottom: 20px;
 `
 
 const ScrollableContent = styled.div`
@@ -225,12 +261,34 @@ const StyledTreeSelect = styled(TreeSelect)`
 
 const PageHeader = styled(Typography.Title)`
   &.ant-typography {
-    font-size: 24px;
+    font-size: 16px;
     background: linear-gradient(135deg, #2c3e50, #3498db);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 24px !important;
+    margin-bottom: 12px !important;
   }
 `
 
-export { Grid, ActionButtons, ParserHeader, StyledLayout, SelectButton, SuccessCard, StickyContainer, ScrollableContent, StyledTreeSelect, PageHeader }
+// Thêm component PulseDot
+const PulseDot = styled.span`
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #4ecdc4;
+  border-radius: 50%;
+  animation: ${pulseDot} 1.5s ease-in-out infinite;
+`
+
+export {
+  Grid,
+  ActionButtons,
+  ParserHeader,
+  StyledLayout,
+  SelectButton,
+  SuccessCard,
+  StickyContainer,
+  ScrollableContent,
+  StyledTreeSelect,
+  PageHeader,
+  PulseDot,
+}

@@ -1,94 +1,83 @@
 import React, { useState, useEffect } from 'react'
 import './index.css'
-import { BlurText } from '../../components/BlurText';
-import { useNavigate } from 'react-router-dom';
+import { BlurText } from '../../components/BlurText'
+import { useNavigate } from 'react-router-dom'
+import TopicSelector from '../../components/TopicSelector'
+import AddressInput from '../../components/AddressInput'
+import FinishButton from '../../components/FinishButton'
+import useStorage from '../../hooks/useStorage'
+import { showToast } from '../../../utils/toast'
 
 export const Chat = () => {
-  const [flyName, setFlyName] = React.useState('');
-  const [flyInterests, setFlyInterests] = React.useState('');
-  const [movementAddress, setMovementAddress] = React.useState('');
-  const [isVisible, setIsVisible] = useState(false);
-  const navigate = useNavigate();
+  const [isVisible, setIsVisible] = useState(true)
+  const { value: selectedTopic, setValue: setSelectedTopic } = useStorage<string>(
+    'selectedTopic',
+    '',
+  )
+  const { value: address, setValue: setAddress } = useStorage<string>('address', '')
+  const { value: flyInterests, setValue: setFlyInterests } = useStorage<string>('flyInterests', '')
+  const [dropdownHeight, setDropdownHeight] = useState(0)
+
+  const navigate = useNavigate()
+
   useEffect(() => {
     // Trigger animations after component mount
-    setIsVisible(true);
+    if (address && selectedTopic) {
+      setIsVisible(false)
+      console.log('🚀 ~ useEffect ~ setIsVisible:', setIsVisible)
+    }
+  }, [])
 
-    // Load saved interests from storage
-    chrome.storage.local.get(['flyInterests'], (result) => {
-      if (result.flyInterests) {
-        setFlyInterests(result.flyInterests);
-      }
-    });
+  const handleTopicChange = (topic: string) => {
+    setSelectedTopic(topic)
+  }
 
-    chrome.storage.local.get(['movementAddress'], (result) => {
-      if (result.movementAddress) {
-        setMovementAddress(result.movementAddress);
-      }
-    });
-  }, []);
+  const handleAddressChange = (address: string) => {
+    setAddress(address)
+  }
 
-  const handleClick = () => {
+  const handleFinish = () => {
     // Save to Chrome extension storage
-    chrome.storage.local.set({
-      flyInterests: flyInterests
-    }, () => {
-      console.log('Interests saved:', flyInterests);
-      navigate('/default');
-    });
+    if (String(address).length > 0 && String(selectedTopic).length > 0) {
+      navigate('/default')
+      return
+    }
+    showToast.error('Please fill in all fields')
+  }
 
-    chrome.storage.local.set({
-      movementAddress: movementAddress
-    }, () => {
-      console.log('Movement address saved:', movementAddress);
-    });
+  // Callback function to get dropdown height from TopicSelector
+  const handleDropdownHeightChange = (height: number) => {
+    setDropdownHeight(height)
   }
 
   return (
     <div className={`fly-container ${isVisible ? 'visible' : ''}`}>
       <div className="header">
-        <div className="logo">
-          {/* Add your logo component here */}
-        </div>
-        <h1>Welcome to <BlurText text="Fly" className="gradient-text" /></h1>
+        <div className="logo">{/* Add your logo component here */}</div>
+        <h1>
+          Welcome to <BlurText text="Fly" className="gradient-text" />
+        </h1>
       </div>
 
       <div className="form-container">
         <div className="input-group animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <label className="input-label text-center">Movement Address</label>
-          <input
-            type="text"
-            value={movementAddress}
-            onChange={(e) => setMovementAddress(e.target.value)}
-            className="text-input"
-            placeholder="Enter movement address"
+          <label className="input-label text-center">Address</label>
+          <AddressInput value={address} onChange={handleAddressChange} />
+        </div>
+
+        <div
+          className="input-group animate-slide-up"
+          style={{ animationDelay: '0.4s', position: 'relative' }}
+        >
+          <label className="input-label text-center">Topic of Interest</label>
+          <TopicSelector
+            selectedTopic={selectedTopic}
+            onTopicChange={handleTopicChange}
+            onDropdownHeightChange={handleDropdownHeightChange}
           />
         </div>
 
-        {/* <div className="input-group animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <label className="input-label text-center">Interest Name</label>
-          <input
-            type="text"
-            value={flyName}
-            onChange={(e) => setFlyName(e.target.value)}
-            className="text-input"
-            placeholder="Enter research name..."
-          />
-        </div> */}
-
-        <div className="input-group animate-slide-up" style={{ animationDelay: '0.6s' }}>
-          <label className="input-label text-center">Topics of Interest</label>
-          <textarea
-            value={flyInterests}
-            onChange={(e) => setFlyInterests(e.target.value)}
-            className="text-area"
-            placeholder="Describe what content you're interested in..."
-            rows={4}
-          />
-        </div>
-
-        <button onClick={handleClick} className="create-button animate-slide-up" style={{ animationDelay: '0.8s' }}>
-          <span>Finish</span>
-        </button>
+        <FinishButton onClick={handleFinish} disabled={!isVisible} spacerHeight={dropdownHeight} />
       </div>
     </div>
   )

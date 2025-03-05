@@ -7,16 +7,36 @@ import ContentScript from '../contentScript/content-script'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Chat } from './pages/personal'
 import { Layout, Typography, Button } from 'antd'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
 export const App: React.FC = () => {
   const queryClient = useQueryClient()
 
+  const checkAndUpdateTab = async () => {
+    const currentTab = await ContentScript.getCurrentTab();
+    const currentUrl = currentTab?.url || '';
+
+    // Get the last URL from storage
+    const { lastActiveUrl } = await chrome.storage.local.get('lastActiveUrl');
+
+    // Only clear cache if URL has changed
+    if (lastActiveUrl !== currentUrl) {
+      await chrome.storage.local.set({ lastActiveUrl: currentUrl });
+      queryClient.clear();
+    }
+  };
+
   useEffect(() => {
     const { unsubscribe } = ContentScript.onActiveTabChange(() => {
-      queryClient.clear()
-    })
+      checkAndUpdateTab();
+    });
 
-    return unsubscribe
-  }, [])
+    // Initial check
+    checkAndUpdateTab();
+
+    return unsubscribe;
+  }, []);
 
   const { data: isAlive } = useQuery({
     queryKey: ['ping'],
@@ -63,6 +83,17 @@ export const App: React.FC = () => {
         <Route path="collected-data" Component={CollectedData} />
         <Route path="no-parsers" Component={NoParsers} />
       </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </MemoryRouter>
   )
 }
