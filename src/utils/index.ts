@@ -11,7 +11,7 @@ export const getNameFromId = (id: string) => {
   return capitalizeWords(parts[parts.length - 1])
 }
 
-export const getUserDataIid = (topic: string, address: string) => {
+export const getUserDataId = (topic: string, address: string) => {
   const slice = address.slice(-10)
 
   return `${topic}-${slice}`

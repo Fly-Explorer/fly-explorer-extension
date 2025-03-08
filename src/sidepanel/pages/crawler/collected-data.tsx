@@ -1,6 +1,5 @@
 import { ParserConfig } from '../../../core'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import * as Pinata from '../../../pinata'
 import {
   Layout as AntdLayout,
   Button,
@@ -14,7 +13,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClonedContextNode } from '../../../common/types'
-import { getNameFromId, getUserDataIid } from '../../../utils'
+import { getNameFromId, getUserDataId } from '../../../utils'
 import CodeEditor from '../../components/CodeEditor'
 import { Layout } from '../../components/layout'
 import { TreeTraverser } from '../../components/tree-traverser'
@@ -39,7 +38,8 @@ import {
   PulseDot,
 } from '../../components/CollectedData/styles'
 import showToast from '../../../utils/toast'
-import { GroupResponseItem } from 'pinata-web3'
+import { GroupListResponse, GroupResponseItem } from 'pinata'
+import { PinataApi } from '../../../pinata'
 
 type ContextTypeTree = {
   value: string
@@ -80,7 +80,11 @@ export const CollectedData: React.FC = () => {
 
   const [address, setAddress] = useState<string | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
-  const [groups, setGroups] = useState<GroupResponseItem[] | GroupResponseItem | null>(null)
+  // const [groups, setGroups] = useState<GroupResponseItem | null>(null)
+  const [groupState, setGroupState] = useState<{
+    groups: GroupListResponse | null
+    createGroup: GroupResponseItem | null
+  } | null>(null)
   const [loadingUpload, setLoadingUpload] = useState<boolean>(false)
 
   useEffect(() => {
@@ -96,11 +100,17 @@ export const CollectedData: React.FC = () => {
   useEffect(() => {
     const fetchGroups = async () => {
       if (address && selectedTopic) {
-        const groups = await Pinata.getGroupPinata(getUserDataIid(selectedTopic, address))
+        const groups: GroupListResponse = await PinataApi.getGroupPinataByName(
+          getUserDataId(selectedTopic, address) 
+        )
+        console.log("🚀 ~ fetchGroups ~ groups:", groups)
         chrome.storage.local.set({
           groups: groups,
         })
-        setGroups(groups[0])
+        setGroupState({
+          groups: groups,
+          createGroup: null,
+        })
       }
     }
     fetchGroups()
@@ -191,83 +201,89 @@ export const CollectedData: React.FC = () => {
     setModalVisible(true)
   }
 
-  const handleCreateGroup = async () => {
-    const group = await Pinata.createGroup(getUserDataIid(selectedTopic!, address!))
-    setGroups(group)
-    chrome.storage.local.set({
-      groups: group,
+  const handleCreateGroup = async (): Promise<GroupResponseItem> => {
+    const createGroup = await PinataApi.createGroupPublic(
+      getUserDataId(selectedTopic!, address!),
+    )
+    setGroupState({
+      groups: null,
+      createGroup: createGroup,
     })
-    return group
+    chrome.storage.local.set({
+      createGroup: createGroup,
+    })
+    return createGroup
   }
 
   const handleUploadFile = async (data: any, fileName: string, groupId: string) => {
     if (!data || !fileName || !groupId) {
-      throw new Error('Missing required information to upload');
+      throw new Error('Missing required information to upload')
     }
-    
+
     try {
-      const upload = await Pinata.uploadFileToGroup(data, fileName, groupId);
-      console.log('Upload result:', upload);
-      showToast.success('Upload success!');
-      setSelectedData([]);
-      return upload;
+      const upload = await PinataApi.addFilesToGroupPublic(data, fileName, groupId)
+      console.log('Upload result:', upload)
+      showToast.success('Upload success!')
+      setSelectedData([])
+      return upload
     } catch (error) {
-      console.error('Error uploading:', error);
-      throw new Error('Upload failed');
+      console.error('Error uploading:', error)
+      throw new Error('Upload failed')
     }
-  };
+  }
 
   const handleUploadClick = async () => {
-    if (loadingUpload) return; // Tránh click nhiều lần
-    
-    setLoadingUpload(true);
-    
+    if (loadingUpload) return // Tránh click nhiều lần
+
+    setLoadingUpload(true)
+
     try {
       if (!selectedData.length) {
-        showToast.warning('Please select at least one item to upload');
-        return;
+        showToast.warning('Please select at least one item to upload')
+        return
       }
-      
+
       if (!selectedTopic) {
-        showToast.error('Topic not found');
-        return;
+        showToast.error('Topic not found')
+        return
       }
-      
-      let groupId: string;
-      
-      if (!groups) {
+
+      let groupId: string
+
+      // Case: Create group
+      if (!groupState?.groups || groupState?.groups.groups.length === 0) {
         try {
-          const newGroup = await handleCreateGroup();
+          const newGroup: GroupResponseItem = await handleCreateGroup()
           if (!newGroup) {
-            throw new Error('Create group failed');
+            throw new Error('Create group failed')
           }
-          groupId = newGroup.id;
+          groupId = newGroup.id
         } catch (error) {
-          console.error('Error creating group:', error);
-          showToast.error('Create group failed');
-          return;
+          console.error('Error creating group:', error)
+          showToast.error('Create group failed')
+          return
         }
       } else {
-        groupId = Array.isArray(groups) ? groups[0].id : groups.id;
+        groupId = Array.isArray(groupState?.groups) ? groupState?.groups[0].id : groupState?.groups.groups[0].id
       }
-      
+
       try {
         await handleUploadFile(
           selectedData.map((node) => node.parsedContext) as unknown as JSON,
           selectedTopic,
-          groupId
-        );
+          groupId,
+        )
       } catch (error) {
-        console.error('Error uploading file:', error);
-        showToast.error('Upload failed');
+        console.error('Error uploading file:', error)
+        showToast.error('Upload failed')
       }
     } catch (error) {
-      console.error('Error in upload process:', error);
-      showToast.error('Upload failed');
+      console.error('Error in upload process:', error)
+      showToast.error('Upload failed')
     } finally {
-      setLoadingUpload(false);
+      setLoadingUpload(false)
     }
-  };
+  }
 
   return (
     <StyledLayout>
