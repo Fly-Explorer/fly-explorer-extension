@@ -30,6 +30,7 @@
     "bn.js": "^5.2.1",
     "chrome-extension-message-wrapper": "^1.0.5",
     "dotenv": "^16.4.7",
+    "ethers": "^6.13.5",
     "json-stringify-deterministic": "^1.0.12",
     "lodash": "^4.17.21",
     "pinata": "^2.0.1",

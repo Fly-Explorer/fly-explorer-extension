@@ -32,7 +32,7 @@ const ActionButtons = styled(Flex)`
   gap: 12px;
   margin: 8px 0;
 
-  ${AnimatedButton} {
+  .animated-button {
     flex: 1;
     height: 40px;
     border-radius: 8px;
