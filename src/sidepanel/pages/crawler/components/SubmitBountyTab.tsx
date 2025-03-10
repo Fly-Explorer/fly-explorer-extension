@@ -1,14 +1,15 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Flex, Typography, Button, Form, Select } from 'antd'
 import { AnimatedButton } from '../../../components/AnimatedButton'
 import { CustomCard } from '../../../components/CustomCard'
 import { StickyContainer, ScrollableContent } from '../../../components/CollectedData/styles'
 import { useBounty } from '../hooks/useBounty'
 import { useDataStore } from '../store/useDataStore'
+import { useUpload } from '../hooks/useUpload'
 
 export const SubmitBountyTab: React.FC = () => {
   const { selectedData, removeItem } = useDataStore()
-
+  const [lastEvaluation, setLastEvaluation] = useState<any>(null)
   const {
     bounties,
     selectedBounty,
@@ -17,6 +18,14 @@ export const SubmitBountyTab: React.FC = () => {
     setSelectedBounty,
     handleSubmitBounty,
   } = useBounty()
+
+  useEffect(() => {
+    chrome.storage.local.get('lastEvaluation').then((result) => {
+      setLastEvaluation(result.lastEvaluation)
+    })
+  }, [lastEvaluation])
+
+  console.log("lastEvaluation", lastEvaluation)
 
   return (
     <Flex vertical gap="small">
@@ -34,8 +43,8 @@ export const SubmitBountyTab: React.FC = () => {
               style={{ width: '100%' }}
               optionLabelProp="label"
               options={bounties.map((bounty) => ({
-                value: bounty.bountyId,
-                label: bounty.bountyId,
+                value: bounty.cid,
+                label: bounty.title,
                 children: (
                   <Flex vertical>
                     <Typography.Text strong>{bounty.bountyId}</Typography.Text>
@@ -81,6 +90,19 @@ export const SubmitBountyTab: React.FC = () => {
                   : 'Submit to bounty'}
             </AnimatedButton>
           </Form.Item>
+
+          {lastEvaluation && (
+            <CustomCard style={{ padding: '16px', marginBottom: '16px' }}>
+              <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+                Last Submission Evaluation
+              </Typography.Title>
+              <Typography.Text>
+                {typeof lastEvaluation === 'string'
+                  ? lastEvaluation
+                  : JSON.stringify(lastEvaluation.params.evaluation, null, 2)}
+              </Typography.Text>
+            </CustomCard>
+          )}
         </Form>
 
         <Typography.Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>

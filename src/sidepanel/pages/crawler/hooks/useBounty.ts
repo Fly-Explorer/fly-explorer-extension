@@ -15,13 +15,33 @@ export const useBounty = () => {
   const { selectedData, clearItems } = useDataStore()
   const { groupState, handleUploadBounty } = useUpload()
 
+  const getPinataData = async (cid: string): Promise<any> => {
+    try {
+      const response = await fetch(`https://ipfs.io/ipfs/${cid}`);
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      const data = await response.json();
+      console.log("Data from IPFS:", data);
+      return data;
+    } catch (error) {
+      console.error("IPFS Error:", error.message);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const fetchBounties = async () => {
       setLoadingBounties(true)
       try {
-        const bounties = await rewardServices.findAll()
-        console.log('🚀 ~ fetchBounties ~ bounties:', bounties)
-        setBounties(bounties as Bounty[])
+        const rewards = await rewardServices.findAll()
+        const bounties = await Promise.all(rewards.filter(item => item.bountyId.length > 40).map(async item => ({
+          ...(await getPinataData(item.bountyId)),
+          cid: item.bountyId
+        }
+        ))
+        );
+        const finalBounties = bounties.filter(item => !item.tags.includes('Aptos'))
+        console.log('🚀 ~ fetchBounties ~ bounties:', finalBounties)
+        setBounties(finalBounties as Bounty[])
         setLoadingBounties(false)
       } catch (error) {
         console.error('Error fetching bounties:', error)
@@ -32,6 +52,17 @@ export const useBounty = () => {
 
     fetchBounties()
   }, [])
+
+  useEffect(() => {
+    chrome.storage.local.get('selectedBounty').then((result) => {
+      setSelectedBounty(result.selectedBounty || null);
+    });
+  }, []);
+
+  const handleSetSelectedBounty = (bountyId: string | null) => {
+    setSelectedBounty(bountyId);
+    chrome.storage.local.set({ selectedBounty: bountyId });
+  };
 
   const handleSubmitBounty = async () => {
     if (!selectedData.length) {
@@ -66,7 +97,7 @@ export const useBounty = () => {
     loadingBounties,
     submittingBounty,
     activeTab,
-    setSelectedBounty,
+    setSelectedBounty: handleSetSelectedBounty,
     handleSubmitBounty,
     setActiveTab,
   }
