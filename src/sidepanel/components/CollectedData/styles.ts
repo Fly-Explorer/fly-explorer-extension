@@ -1,4 +1,4 @@
-import { Button, Flex, TreeSelect, Typography, Layout as AntdLayout } from 'antd'
+import { Button, Flex, TreeSelect, Typography, Layout as AntdLayout, Tabs } from 'antd'
 import styled, { keyframes } from 'styled-components'
 import { AnimatedButton } from '../AnimatedButton'
 import { CustomCard } from '../CustomCard'
@@ -269,6 +269,30 @@ const PageHeader = styled(Typography.Title)`
   }
 `
 
+const StyledTabs = styled(Tabs)`
+  .ant-tabs-nav {
+    margin-bottom: 8px;
+  }
+  
+  .ant-tabs-tab {
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      color: #4ecdc4;
+    }
+  }
+  
+  .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #4ecdc4 !important;
+    font-weight: 500;
+  }
+  
+  .ant-tabs-ink-bar {
+    background: #4ecdc4;
+  }
+`
+
 // Thêm component PulseDot
 const PulseDot = styled.span`
   display: inline-block;
@@ -291,4 +315,5 @@ export {
   StyledTreeSelect,
   PageHeader,
   PulseDot,
+  StyledTabs,
 }

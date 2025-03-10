@@ -9,6 +9,8 @@ import {
   Typography,
   Modal,
   Tooltip,
+  Select,
+  Form,
 } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -36,10 +38,12 @@ import {
   StyledTreeSelect,
   PageHeader,
   PulseDot,
+  StyledTabs,
 } from '../../components/CollectedData/styles'
 import showToast from '../../../utils/toast'
 import { GroupListResponse, GroupResponseItem } from 'pinata'
 import { PinataApi } from '../../../pinata'
+// import { create } from 'zustand'
 
 type ContextTypeTree = {
   value: string
@@ -65,6 +69,27 @@ function extractContextTypesTree(nodes: ClonedContextNode[]): ContextTypeTree[] 
   }))
 }
 
+// Tạo store để quản lý state của tab
+interface TabState {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+}
+
+// Tạm thời comment phần zustand để tránh lỗi khi chưa cài đặt thư viện
+// const useTabStore = create<TabState>((set) => ({
+//   activeTab: 'collected-data',
+//   setActiveTab: (tab) => set({ activeTab: tab }),
+// }));
+
+// Interface cho Bounty
+interface Bounty {
+  id: string;
+  name: string;
+  description?: string;
+  reward?: string;
+}
+
+// Thay thế bằng useState để quản lý tab
 export const CollectedData: React.FC = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -86,6 +111,15 @@ export const CollectedData: React.FC = () => {
     createGroup: GroupResponseItem | null
   } | null>(null)
   const [loadingUpload, setLoadingUpload] = useState<boolean>(false)
+  
+  // State cho bounty
+  const [bounties, setBounties] = useState<Bounty[]>([])
+  const [selectedBounty, setSelectedBounty] = useState<string | null>(null)
+  const [loadingBounties, setLoadingBounties] = useState<boolean>(false)
+  const [submittingBounty, setSubmittingBounty] = useState<boolean>(false)
+  
+  // Sử dụng useState thay vì zustand
+  const [activeTab, setActiveTab] = useState<string>('collected-data');
 
   useEffect(() => {
     chrome.storage.local.get('address').then((result) => {
@@ -158,6 +192,30 @@ export const CollectedData: React.FC = () => {
     () => extractContextTypesTree(contextTree ? [contextTree] : []),
     [contextTree],
   )
+
+  useEffect(() => {
+    // Giả lập API call để lấy danh sách bounty
+    const fetchBounties = async () => {
+      setLoadingBounties(true);
+      try {
+        // Thay thế bằng API call thực tế
+        setTimeout(() => {
+          const mockBounties: Bounty[] = [
+            { id: '1', name: 'Web3 Data Collection', description: 'Collect data about Web3 projects', reward: '0.5 ETH' },
+            { id: '2', name: 'DeFi Protocol Analysis', description: 'Analyze DeFi protocols and their features', reward: '0.3 ETH' },
+            { id: '3', name: 'NFT Marketplace Research', description: 'Research NFT marketplaces and their offerings', reward: '0.2 ETH' },
+          ];
+          setBounties(mockBounties);
+          setLoadingBounties(false);
+        }, 1000);
+      } catch (error) {
+        console.error('Error fetching bounties:', error);
+        setLoadingBounties(false);
+      }
+    };
+    
+    fetchBounties();
+  }, []);
 
   if (!contextTree) {
     return (
@@ -285,6 +343,34 @@ export const CollectedData: React.FC = () => {
     }
   }
 
+  const handleSubmitBounty = async () => {
+    if (!selectedData.length) {
+      showToast.warning('Vui lòng chọn ít nhất một mục dữ liệu để gửi');
+      return;
+    }
+    
+    if (!selectedBounty) {
+      showToast.warning('Vui lòng chọn một bounty để gửi');
+      return;
+    }
+    
+    setSubmittingBounty(true);
+    
+    try {
+      // Thay thế bằng API call thực tế để gửi dữ liệu đến bounty
+      setTimeout(() => {
+        showToast.success('Gửi dữ liệu đến bounty thành công!');
+        setSubmittingBounty(false);
+        setSelectedData([]);
+        setSelectedBounty(null);
+      }, 1500);
+    } catch (error) {
+      console.error('Error submitting to bounty:', error);
+      showToast.error('Gửi dữ liệu đến bounty thất bại');
+      setSubmittingBounty(false);
+    }
+  };
+
   return (
     <StyledLayout>
       <Space direction="vertical" size="small" style={{ display: 'flex' }}>
@@ -327,268 +413,419 @@ export const CollectedData: React.FC = () => {
         ) : null}
 
         <Space direction="vertical" size="small" style={{ display: 'flex' }}>
-          <PageHeader level={5} style={{ marginBottom: '2px', marginTop: '2px' }}>
-            Collected Data
-          </PageHeader>
-          <Flex vertical gap="small">
-            <StickyContainer>
-              <AnimatedButton
-                block
-                type="primary"
-                onClick={handleUploadClick}
-                style={{
-                  background: 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
-                  backgroundSize: '100% 100%',
-                  border: 'none',
-                  color: 'white',
-                  fontWeight: '600',
-                  height: '38px',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 15px rgba(78, 205, 196, 0.25)',
-                  marginBottom: '8px',
-                  fontSize: '14px',
-                }}
-              >
-                {loadingUpload
-                  ? 'Uploading...'
-                  : selectedData.length > 0
-                    ? `Upload ${selectedData.length} item${selectedData.length > 1 ? 's' : ''}`
-                    : 'Upload'}
-              </AnimatedButton>
-
-              {/* {loadingUpload && (
-                <CustomCard style={{ 
-                  marginBottom: '8px', 
-                  padding: '10px',
-                  background: 'linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(69, 184, 172, 0.08))',
-                  border: 'none',
-                  boxShadow: '0 8px 32px rgba(78, 205, 196, 0.15)'
-                }}>
-                  <Flex justify="space-between" align="center">
-                    <Typography.Title
-                      level={5}
-                      style={{
-                        color: '#45b8ac',
-                        marginBottom: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '14px',
-                      }}
-                    >
-                      <span
+          <StyledTabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={[
+              {
+                key: 'collected-data',
+                label: 'Collected Data',
+                children: (
+                  <Flex vertical gap="small">
+                    <StickyContainer>
+                      <AnimatedButton
+                        block
+                        type="primary"
+                        onClick={handleUploadClick}
                         style={{
-                          display: 'inline-block',
-                          width: '6px',
-                          height: '6px',
-                          background: '#4ecdc4',
-                          borderRadius: '50%',
-                          animation: 'pulse 1.5s ease-in-out infinite',
+                          background: 'linear-gradient(135deg, #4ecdc4, #45b8ac)',
+                          backgroundSize: '100% 100%',
+                          border: 'none',
+                          color: 'white',
+                          fontWeight: '600',
+                          height: '38px',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 15px rgba(78, 205, 196, 0.25)',
+                          marginBottom: '8px',
+                          fontSize: '14px',
                         }}
-                      ></span>
-                      Đang tải dữ liệu lên...
-                    </Typography.Title>
-                  </Flex>
-                  <Typography.Text style={{ fontSize: '12px', color: '#666' }}>
-                    Vui lòng đợi trong khi chúng tôi đang xử lý dữ liệu của bạn.
-                  </Typography.Text>
-                </CustomCard>
-              )} */}
-
-              {/* {uploadResponse && !loadingUpload && (
-                <SuccessCard style={{ marginBottom: '8px', padding: '10px' }}>
-                  <Flex justify="space-between" align="center">
-                    <Typography.Title
-                      level={5}
-                      style={{
-                        color: '#9333ea',
-                        marginBottom: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '14px',
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          width: '6px',
-                          height: '6px',
-                          background: '#a855f7',
-                          borderRadius: '50%',
-                          animation: 'pulse 2s ease-in-out infinite',
-                        }}
-                      ></span>
-                      Upload Success
-                    </Typography.Title>
-                    <Button
-                      type="text"
-                      size="small"
-                      onClick={() => setUploadResponse(null)}
-                      style={{
-                        color: '#9333ea',
-                        opacity: 0.7,
-                        transition: 'opacity 0.3s ease',
-                        padding: '2px 6px',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
-                    >
-                      ✕
-                    </Button>
-                  </Flex>
-                  <Grid>
-                    <DataItem>
-                      <span className="label">Vault URL</span>
-                      <a
-                        className="value"
-                        href={`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#9333ea', textDecoration: 'none', fontSize: '12px' }}
                       >
-                        {`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
-                      </a>
-                    </DataItem>
-                  </Grid>
-                </SuccessCard>
-              )} */}
-              <StyledTreeSelect
-                style={{ width: '100%', marginBottom: '8px' }}
-                value={contextTypes}
-                dropdownStyle={{
-                  maxHeight: 400,
-                  overflow: 'auto',
-                  borderRadius: '8px',
-                  padding: '6px',
-                }}
-                treeData={contextTypesTree}
-                placeholder="Filter by type..."
-                treeDefaultExpandAll
-                onChange={handleContextTypeChange}
-                multiple
-              />
-            </StickyContainer>
+                        {loadingUpload
+                          ? 'Uploading...'
+                          : selectedData.length > 0
+                            ? `Upload ${selectedData.length} item${selectedData.length > 1 ? 's' : ''}`
+                            : 'Upload'}
+                      </AnimatedButton>
 
-            <ScrollableContent>
-              <TreeTraverser
-                node={contextTree}
-                component={({ node }) => {
-                  if (!contextTypes.includes(node.contextType) && contextTypes.length > 0)
-                    return null
-                  const isSelected = selectedData.some(
-                    (selectedNode) => selectedNode.id === node.id,
-                  )
+                      {/* {loadingUpload && (
+                        <CustomCard style={{ 
+                          marginBottom: '8px', 
+                          padding: '10px',
+                          background: 'linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(69, 184, 172, 0.08))',
+                          border: 'none',
+                          boxShadow: '0 8px 32px rgba(78, 205, 196, 0.15)'
+                        }}>
+                          <Flex justify="space-between" align="center">
+                            <Typography.Title
+                              level={5}
+                              style={{
+                                color: '#45b8ac',
+                                marginBottom: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '14px',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  width: '6px',
+                                  height: '6px',
+                                  background: '#4ecdc4',
+                                  borderRadius: '50%',
+                                  animation: 'pulse 1.5s ease-in-out infinite',
+                                }}
+                              ></span>
+                              Đang tải dữ liệu lên...
+                            </Typography.Title>
+                          </Flex>
+                          <Typography.Text style={{ fontSize: '12px', color: '#666' }}>
+                            Vui lòng đợi trong khi chúng tôi đang xử lý dữ liệu của bạn.
+                          </Typography.Text>
+                        </CustomCard>
+                      )} */}
 
-                  // Lấy text từ parsedContext nếu có
-                  const mainText =
-                    node.parsedContext.text ||
-                    node.parsedContext.title ||
-                    node.parsedContext.name ||
-                    ''
+                      {/* {uploadResponse && !loadingUpload && (
+                        <SuccessCard style={{ marginBottom: '8px', padding: '10px' }}>
+                          <Flex justify="space-between" align="center">
+                            <Typography.Title
+                              level={5}
+                              style={{
+                                color: '#9333ea',
+                                marginBottom: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '14px',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  width: '6px',
+                                  height: '6px',
+                                  background: '#a855f7',
+                                  borderRadius: '50%',
+                                  animation: 'pulse 2s ease-in-out infinite',
+                                }}
+                              ></span>
+                              Upload Success
+                            </Typography.Title>
+                            <Button
+                              type="text"
+                              size="small"
+                              onClick={() => setUploadResponse(null)}
+                              style={{
+                                color: '#9333ea',
+                                opacity: 0.7,
+                                transition: 'opacity 0.3s ease',
+                                padding: '2px 6px',
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                              onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
+                            >
+                              ✕
+                            </Button>
+                          </Flex>
+                          <Grid>
+                            <DataItem>
+                              <span className="label">Vault URL</span>
+                              <a
+                                className="value"
+                                href={`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#9333ea', textDecoration: 'none', fontSize: '12px' }}
+                              >
+                                {`https://app.tusky.io/vaults/${uploadResponse.options.metadata?.vaultId}/assets`}
+                              </a>
+                            </DataItem>
+                          </Grid>
+                        </SuccessCard>
+                      )} */}
+                      <StyledTreeSelect
+                        style={{ width: '100%', marginBottom: '8px' }}
+                        value={contextTypes}
+                        dropdownStyle={{
+                          maxHeight: 400,
+                          overflow: 'auto',
+                          borderRadius: '8px',
+                          padding: '6px',
+                        }}
+                        treeData={contextTypesTree}
+                        placeholder="Filter by type..."
+                        treeDefaultExpandAll
+                        onChange={handleContextTypeChange}
+                        multiple
+                      />
+                    </StickyContainer>
 
-                  return (
-                    <CustomCard
-                      onClick={() => {
-                        if (isSelected) {
-                          setSelectedData((prev) => prev.filter((n) => n.id !== node.id))
-                        } else {
-                          setSelectedData((prev) => [...prev, node])
-                        }
-                      }}
-                      className={isSelected ? 'selected' : ''}
-                      style={{
-                        cursor: 'pointer',
-                        padding: '10px',
-                        marginBottom: '8px',
-                        transition: 'all 0.2s ease',
-                        border: '1px solid #eee',
-                        borderRadius: '8px',
-                        boxShadow: isSelected ? '0 2px 8px rgba(78, 205, 196, 0.15)' : 'none',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)'
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.boxShadow = 'none'
-                        } else {
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(78, 205, 196, 0.15)'
-                        }
-                      }}
-                    >
-                      <Flex justify="space-between" align="center" style={{ marginBottom: '6px' }}>
-                        <Typography.Text
-                          strong
-                          style={{
-                            color: isSelected ? '#45b8ac' : 'inherit',
-                            transition: 'color 0.3s ease',
-                            fontSize: '13px',
-                          }}
+                    <ScrollableContent>
+                      <TreeTraverser
+                        node={contextTree}
+                        component={({ node }) => {
+                          if (!contextTypes.includes(node.contextType) && contextTypes.length > 0)
+                            return null
+                          const isSelected = selectedData.some(
+                            (selectedNode) => selectedNode.id === node.id,
+                          )
+
+                          // Lấy text từ parsedContext nếu có
+                          const mainText =
+                            node.parsedContext.text ||
+                            node.parsedContext.title ||
+                            node.parsedContext.name ||
+                            ''
+
+                          return (
+                            <CustomCard
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedData((prev) => prev.filter((n) => n.id !== node.id))
+                                } else {
+                                  setSelectedData((prev) => [...prev, node])
+                                }
+                              }}
+                              className={isSelected ? 'selected' : ''}
+                              style={{
+                                cursor: 'pointer',
+                                padding: '10px',
+                                marginBottom: '8px',
+                                transition: 'all 0.2s ease',
+                                border: '1px solid #eee',
+                                borderRadius: '8px',
+                                boxShadow: isSelected ? '0 2px 8px rgba(78, 205, 196, 0.15)' : 'none',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)'
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.boxShadow = 'none'
+                                } else {
+                                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(78, 205, 196, 0.15)'
+                                }
+                              }}
+                            >
+                              <Flex justify="space-between" align="center" style={{ marginBottom: '6px' }}>
+                                <Typography.Text
+                                  strong
+                                  style={{
+                                    color: isSelected ? '#45b8ac' : 'inherit',
+                                    transition: 'color 0.3s ease',
+                                    fontSize: '13px',
+                                  }}
+                                >
+                                  {node.contextType}
+                                </Typography.Text>
+                                <SelectButton
+                                  size="small"
+                                  className={isSelected ? 'selected' : ''}
+                                  style={{
+                                    padding: '2px 8px',
+                                    fontSize: '12px',
+                                    height: 'auto',
+                                    borderRadius: '4px',
+                                  }}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (isSelected) {
+                                      setSelectedData((prev) => prev.filter((n) => n.id !== node.id))
+                                    } else {
+                                      setSelectedData((prev) => [...prev, node])
+                                    }
+                                  }}
+                                >
+                                  {isSelected ? 'Selected' : 'Select'}
+                                </SelectButton>
+                              </Flex>
+
+                              {mainText && (
+                                <Typography.Paragraph
+                                  ellipsis={{ rows: 2 }}
+                                  style={{
+                                    fontSize: '12px',
+                                    margin: '0 0 6px 0',
+                                    color: '#666',
+                                  }}
+                                >
+                                  {mainText}
+                                </Typography.Paragraph>
+                              )}
+
+                              <Flex justify="flex-end">
+                                <Tooltip title="View details">
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    onClick={(e) => openItemDetails(node, e)}
+                                    style={{
+                                      padding: '2px 8px',
+                                      fontSize: '12px',
+                                      color: '#2f302f',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}
+                                  >
+                                    <span style={{ marginRight: '4px' }}>Details</span>
+                                    <span>⋯</span>
+                                  </Button>
+                                </Tooltip>
+                              </Flex>
+                            </CustomCard>
+                          )
+                        }}
+                      />
+                    </ScrollableContent>
+                  </Flex>
+                ),
+              },
+              {
+                key: 'submit-bounty',
+                label: 'Submit Bounty',
+                children: (
+                  <Flex vertical gap="small">
+                    <StickyContainer>
+                      <Form layout="vertical">
+                        <Form.Item 
+                          label={<Typography.Text strong>Select Bounty</Typography.Text>}
+                          help="Select bounty to submit collected data"
                         >
-                          {node.contextType}
-                        </Typography.Text>
-                        <SelectButton
-                          size="small"
-                          className={isSelected ? 'selected' : ''}
-                          style={{
-                            padding: '2px 8px',
-                            fontSize: '12px',
-                            height: 'auto',
-                            borderRadius: '4px',
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (isSelected) {
-                              setSelectedData((prev) => prev.filter((n) => n.id !== node.id))
-                            } else {
-                              setSelectedData((prev) => [...prev, node])
-                            }
-                          }}
-                        >
-                          {isSelected ? 'Selected' : 'Select'}
-                        </SelectButton>
-                      </Flex>
-
-                      {mainText && (
-                        <Typography.Paragraph
-                          ellipsis={{ rows: 2 }}
-                          style={{
-                            fontSize: '12px',
-                            margin: '0 0 6px 0',
-                            color: '#666',
-                          }}
-                        >
-                          {mainText}
-                        </Typography.Paragraph>
-                      )}
-
-                      <Flex justify="flex-end">
-                        <Tooltip title="View details">
-                          <Button
-                            type="text"
-                            size="small"
-                            onClick={(e) => openItemDetails(node, e)}
+                          <Select
+                            placeholder="Select bounty..."
+                            loading={loadingBounties}
+                            value={selectedBounty}
+                            onChange={setSelectedBounty}
+                            style={{ width: '100%' }}
+                            options={bounties.map(bounty => ({
+                              value: bounty.id,
+                              label: (
+                                <Flex vertical>
+                                  <Typography.Text strong>{bounty.name}</Typography.Text>
+                                  {bounty.description && (
+                                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                                      {bounty.description}
+                                    </Typography.Text>
+                                  )}
+                                  {bounty.reward && (
+                                    <Typography.Text type="success" style={{ fontSize: '12px' }}>
+                                      Reward: {bounty.reward}
+                                    </Typography.Text>
+                                  )}
+                                </Flex>
+                              )
+                            }))}
+                          />
+                        </Form.Item>
+                        
+                        <Form.Item>
+                          <AnimatedButton
+                            block
+                            type="primary"
+                            onClick={handleSubmitBounty}
+                            loading={submittingBounty}
+                            disabled={!selectedBounty || selectedData.length === 0}
                             style={{
-                              padding: '2px 8px',
-                              fontSize: '12px',
-                              color: '#2f302f',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
+                              background: 'linear-gradient(135deg, #9333ea, #a855f7)',
+                              backgroundSize: '100% 100%',
+                              border: 'none',
+                              color: 'white',
+                              fontWeight: '600',
+                              height: '38px',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 15px rgba(147, 51, 234, 0.25)',
+                              marginBottom: '8px',
+                              fontSize: '14px',
                             }}
                           >
-                            <span style={{ marginRight: '4px' }}>Details</span>
-                            <span>⋯</span>
-                          </Button>
-                        </Tooltip>
-                      </Flex>
-                    </CustomCard>
-                  )
-                }}
-              />
-            </ScrollableContent>
-          </Flex>
+                            {submittingBounty
+                              ? 'Submitting...'
+                              : selectedData.length > 0
+                                ? `Submit ${selectedData.length} data to Bounty`
+                                : 'Submit to Bounty'}
+                          </AnimatedButton>
+                        </Form.Item>
+                      </Form>
+                      
+                      <Typography.Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>
+                        Selected: <Typography.Text strong>{selectedData.length}</Typography.Text> data
+                      </Typography.Text>
+                    </StickyContainer>
+                    
+                    <ScrollableContent>
+                      <Typography.Title level={5} style={{ marginBottom: '16px' }}>
+                        Selected Data
+                      </Typography.Title>
+                      
+                      {selectedData.length === 0 ? (
+                        <CustomCard style={{ padding: '16px', textAlign: 'center' }}>
+                          <Typography.Text type="secondary">
+                            No data selected. Please switch to the "Collected Data" tab to select data.
+                          </Typography.Text>
+                        </CustomCard>
+                      ) : (
+                        selectedData.map(node => (
+                          <CustomCard
+                            key={node.id}
+                            style={{
+                              padding: '10px',
+                              marginBottom: '8px',
+                              border: '1px solid #eee',
+                              borderRadius: '8px',
+                              boxShadow: '0 2px 8px rgba(78, 205, 196, 0.15)',
+                            }}
+                          >
+                            <Flex justify="space-between" align="center" style={{ marginBottom: '6px' }}>
+                              <Typography.Text
+                                strong
+                                style={{
+                                  color: '#45b8ac',
+                                  transition: 'color 0.3s ease',
+                                  fontSize: '13px',
+                                }}
+                              >
+                                {node.contextType}
+                              </Typography.Text>
+                              <Button
+                                size="small"
+                                danger
+                                style={{
+                                  padding: '2px 8px',
+                                  fontSize: '12px',
+                                  height: 'auto',
+                                  borderRadius: '4px',
+                                }}
+                                onClick={() => {
+                                  setSelectedData(prev => prev.filter(item => item.id !== node.id));
+                                }}
+                              >
+                               Delete
+                              </Button>
+                            </Flex>
+                            
+                            {(node.parsedContext.text || node.parsedContext.title || node.parsedContext.name) && (
+                              <Typography.Paragraph
+                                ellipsis={{ rows: 2 }}
+                                style={{
+                                  fontSize: '12px',
+                                  margin: '0 0 6px 0',
+                                  color: '#666',
+                                }}
+                              >
+                                {node.parsedContext.text || node.parsedContext.title || node.parsedContext.name}
+                              </Typography.Paragraph>
+                            )}
+                          </CustomCard>
+                        ))
+                      )}
+                    </ScrollableContent>
+                  </Flex>
+                ),
+              },
+            ]}
+          />
         </Space>
       </Space>
 
