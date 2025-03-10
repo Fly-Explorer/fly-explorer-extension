@@ -5,21 +5,35 @@ import { PinataApi } from '../../../../pinata';
 import { getUserDataId } from '../../../../utils';
 import showToast from '../../../../utils/toast';
 import { useDataStore } from '../store/useDataStore';
+import { sendMessage } from '../../../../api';
+
+interface EvaluationResponse {
+  params: {
+    evaluation: {
+      overallScore: number;
+      qualifiesForBounty: boolean;
+      summary: string;
+      detailedFeedback: string;
+    };
+  }
+}
 
 export const useUpload = () => {
   const [uploadResponse, setUploadResponse] = useState<{
     url: string;
     options: UploadOptions;
   } | null>(null);
-  
+
   const [address, setAddress] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedBounty, setSelectedBounty] = useState<string | null>(null);
   const [groupState, setGroupState] = useState<{
     groups: GroupListResponse | null;
     createGroup: GroupResponseItem | null;
   } | null>(null);
   const [loadingUpload, setLoadingUpload] = useState<boolean>(false);
-  
+  const [lastEvaluation, setLastEvaluation] = useState<any>(null);
+
   // Sử dụng zustand store
   const { selectedData, clearItems } = useDataStore();
 
@@ -30,6 +44,10 @@ export const useUpload = () => {
 
     chrome.storage.local.get('selectedTopic').then((result) => {
       setSelectedTopic(result.selectedTopic || null);
+    });
+
+    chrome.storage.local.get('selectedBounty').then((result) => {
+      setSelectedBounty(result.selectedBounty || null);
     });
   }, []);
 
@@ -56,7 +74,7 @@ export const useUpload = () => {
     if (!selectedTopic || !address) {
       throw new Error('Missing topic or address');
     }
-    
+
     const createGroup = await PinataApi.createGroupPublic(
       getUserDataId(selectedTopic, address),
     );
@@ -119,8 +137,8 @@ export const useUpload = () => {
           return;
         }
       } else {
-        groupId = Array.isArray(groupState?.groups) 
-          ? groupState?.groups[0].id 
+        groupId = Array.isArray(groupState?.groups)
+          ? groupState?.groups[0].id
           : groupState?.groups.groups[0].id;
       }
 
@@ -143,8 +161,7 @@ export const useUpload = () => {
   };
 
   const handleUploadBounty = async () => {
-    if (loadingUpload) return; // Tránh click nhiều lần
-
+    if (loadingUpload) return;
     setLoadingUpload(true);
 
     try {
@@ -174,8 +191,8 @@ export const useUpload = () => {
           return;
         }
       } else {
-        groupId = Array.isArray(groupState?.groups) 
-          ? groupState?.groups[0].id 
+        groupId = Array.isArray(groupState?.groups)
+          ? groupState?.groups[0].id
           : groupState?.groups.groups[0].id;
       }
 
@@ -185,6 +202,20 @@ export const useUpload = () => {
           selectedTopic,
           groupId,
         );
+
+        const message = `you must use action CHECK_VERIFY data submit: ${selectedData.map((node) => node.parsedContext).map((item) => item.text).join('\n')}
+          wallet address: ${address}
+          bountyId: ${selectedBounty}
+        `;
+
+        const response = await sendMessage(message);
+        console.log("Response", response)
+        const evaluationData = response[1] as EvaluationResponse;
+        console.log("Evaluation data", evaluationData)
+        chrome.storage.local.set({ lastEvaluation: evaluationData })
+
+        setLastEvaluation(evaluationData)
+
       } catch (error) {
         console.error('Error uploading file:', error);
         showToast.error('Upload failed');
@@ -203,5 +234,6 @@ export const useUpload = () => {
     loadingUpload,
     handleUploadClick,
     handleUploadBounty,
+    lastEvaluation,
   };
-}; 
+};

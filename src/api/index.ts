@@ -1,4 +1,4 @@
-const BASE_URL = "https://flyfish-movement.weminal.xyz";
+const BASE_URL = "https://flyfish-sonic.weminal.xyz";
 
 export interface MessageResponse {
 
@@ -10,7 +10,7 @@ export async function sendMessage(text: string) {
     formData.append('text', text);
     formData.append('user', 'user');
 
-    const response = await fetch(`${BASE_URL}/026c9a66-ed85-09a6-bc7a-bd19a03e211c/message`, {
+    const response = await fetch(`${BASE_URL}/7129af6e-881b-01cd-b6b8-f74f5598b6f4/message`, {
       method: 'POST',
       body: formData,
     });

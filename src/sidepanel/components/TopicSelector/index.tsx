@@ -11,7 +11,7 @@ interface TopicSelectorProps {
 export const TopicSelector: React.FC<TopicSelectorProps> = ({
   selectedTopic,
   onTopicChange,
-  predefinedTopics = ["Aptos", "Movement"],
+  predefinedTopics = ["Sonic"],
   onDropdownHeightChange
 }) => {
   const [customTopic, setCustomTopic] = useState('');
@@ -19,10 +19,10 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>('bottom');
   const [dropdownHeight, setDropdownHeight] = useState(0);
-  
+
   const selectContainerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     // Close dropdown when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
@@ -32,7 +32,7 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
         setDropdownHeight(0);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -60,7 +60,7 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
     if (!isDropdownOpen) {
       // Luôn hiển thị dropdown phía dưới
       setDropdownPosition('bottom');
-      
+
       // Đặt timeout để đảm bảo dropdownRef đã được render
       setTimeout(() => {
         if (dropdownRef.current) {
@@ -77,7 +77,7 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
         onDropdownHeightChange(0);
       }
     }
-    
+
     setIsDropdownOpen(!isDropdownOpen);
   };
 
@@ -90,7 +90,7 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
       onDropdownHeightChange(0);
     }
   };
-  
+
   const handleAddCustomTopic = () => {
     if (customTopic.trim() !== '') {
       onTopicChange(customTopic.trim());
@@ -107,8 +107,8 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
   return (
     <div className="topic-selector-wrapper">
       <div className="select-container" ref={selectContainerRef}>
-        <div 
-          className="select-field" 
+        <div
+          className="select-field"
           onClick={toggleDropdown}
         >
           {selectedTopic ? (
@@ -118,14 +118,14 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
           )}
           <span className={`arrow-icon ${isDropdownOpen ? 'open' : ''}`}>▼</span>
         </div>
-        
+
         {isDropdownOpen && (
-          <div 
+          <div
             ref={dropdownRef}
             className={`select-dropdown ${dropdownPosition}`}
           >
             {predefinedTopics.map((topic) => (
-              <div 
+              <div
                 key={topic}
                 className={`select-option ${selectedTopic === topic ? 'selected' : ''}`}
                 onClick={() => handleTopicSelect(topic)}
@@ -134,11 +134,11 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
                 {selectedTopic === topic && <span className="check-icon">✓</span>}
               </div>
             ))}
-            
+
             <div className="select-option add-custom" onClick={() => setShowCustomInput(true)}>
               <span className="option-text">+ Add custom topic</span>
             </div>
-            
+
             {showCustomInput && (
               <div className="custom-option-container">
                 <input
@@ -158,7 +158,7 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
                   onClick={(e) => e.stopPropagation()}
                 />
                 <div className="custom-option-actions">
-                  <button 
+                  <button
                     className="custom-option-button add"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -167,7 +167,7 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
                   >
                     Add
                   </button>
-                  <button 
+                  <button
                     className="custom-option-button cancel"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -183,11 +183,11 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
           </div>
         )}
       </div>
-      
+
       {/* Spacer để tạo khoảng cách khi dropdown hiển thị */}
-      <div 
-        className="dropdown-spacer" 
-        style={{ 
+      <div
+        className="dropdown-spacer"
+        style={{
           height: dropdownPosition === 'bottom' ? dropdownHeight : 0,
           transition: 'height 0.2s ease'
         }}
@@ -196,4 +196,4 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
   );
 };
 
-export default TopicSelector; 
+export default TopicSelector;
