@@ -30,8 +30,12 @@
     "bn.js": "^5.2.1",
     "chrome-extension-message-wrapper": "^1.0.5",
     "dotenv": "^16.4.7",
+    "ethers": "^6.13.5",
+    "framer-motion": "^12.4.10",
     "json-stringify-deterministic": "^1.0.12",
     "lodash": "^4.17.21",
+    "lucide-react": "^0.479.0",
+    "pinata": "^2.0.1",
     "pinata-web3": "^0.5.4",
     "react": "^18.2.0",
     "react-codemirror-merge": "^4.23.7",
@@ -39,8 +43,8 @@
     "react-router-dom": "^7.1.5",
     "react-toastify": "^11.0.5",
     "styled-components": "^6.1.14",
-    "tus-js-client": "^4.3.1",
-    "webextension-polyfill": "^0.12.0"
+    "webextension-polyfill": "^0.12.0",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.19",

@@ -1,7 +1,3 @@
-/**
- * Based on: https://github.com/near/wallet-selector/blob/594f530bf729b6c3d2f72a42612345e40654a9be/packages/core/src/lib/services/event-emitter/event-emitter.service.ts
- */
-
 import { EventEmitter as NEventEmitter } from 'events'
 
 export interface Subscription {

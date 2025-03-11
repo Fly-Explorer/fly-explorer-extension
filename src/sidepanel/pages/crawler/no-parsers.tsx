@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import Background from '../../../common/background'
 import CodeEditor from '../../components/CodeEditor'
 import ContentScript from '../../../contentScript/content-script'
-import { createVault, getDataByID, getDataFromVault, getFileInfo, uploadFile } from '../../../tusky'
-import { Upload } from 'tus-js-client'
 
 export const NoParsers: FC = () => {
   const [isCodeEditorOpened, setIsCodeEditorOpened] = useState(false)

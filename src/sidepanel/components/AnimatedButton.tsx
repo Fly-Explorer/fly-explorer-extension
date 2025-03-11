@@ -51,7 +51,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
   const isLoading = loading === true;
   
   return (
-    <StyledButton $isLoading={isLoading} loading={isLoading} {...props}>
+    <StyledButton className="animated-button" $isLoading={isLoading} loading={isLoading} {...props}>
       {children}
     </StyledButton>
   );
