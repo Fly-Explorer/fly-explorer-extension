@@ -8,3 +8,17 @@ export interface IPost {
     [key: string]: string[];
   };
 }
+
+export interface BountyType {
+  id: string;
+  title: string;
+  description: string;
+  reward: number;
+  deadline: string;
+  participants: number;
+  status: 'open' | 'closed' | 'in-progress';
+  tags: string[];
+  createdBy: string;
+  requirements: string[];
+  submissionLink?: string;
+}

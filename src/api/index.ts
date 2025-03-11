@@ -1,8 +1,4 @@
-const BASE_URL = "https://flyfish-sonic.weminal.xyz";
-
-export interface MessageResponse {
-
-}
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export async function sendMessage(text: string) {
   try {
@@ -10,7 +6,7 @@ export async function sendMessage(text: string) {
     formData.append('text', text);
     formData.append('user', 'user');
 
-    const response = await fetch(`${BASE_URL}/7129af6e-881b-01cd-b6b8-f74f5598b6f4/message`, {
+    const response = await fetch(`${BASE_URL}/${import.meta.env.VITE_AGENT_ID}/message`, {
       method: 'POST',
       body: formData,
     });

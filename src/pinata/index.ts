@@ -1,7 +1,7 @@
 import { DeleteResponse, FileListItem, FileListResponse, GroupListResponse, GroupResponseItem, PinataSDK, UpdateGroupFilesResponse } from 'pinata'
 
 // PINATA
-const pinata = new PinataSDK({
+export const pinata = new PinataSDK({
   pinataJwt: process.env.VITE_PINATA_JWT!,
   pinataGateway: process.env.VITE_PINATA_GATEWAY!,
 })
