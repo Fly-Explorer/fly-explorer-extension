@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { Flex, Typography, Button, Form, Select } from 'antd'
+
 import { AnimatedButton } from '../../../components/AnimatedButton'
 import { CustomCard } from '../../../components/CustomCard'
 import { StickyContainer, ScrollableContent } from '../../../components/CollectedData/styles'
 import { useBounty } from '../hooks/useBounty'
 import { useDataStore } from '../store/useDataStore'
-import { useUpload } from '../hooks/useUpload'
 
 export const SubmitBountyTab: React.FC = () => {
   const { selectedData, removeItem } = useDataStore()
@@ -24,8 +24,6 @@ export const SubmitBountyTab: React.FC = () => {
       setLastEvaluation(result.lastEvaluation)
     })
   }, [lastEvaluation])
-
-  console.log("lastEvaluation", lastEvaluation)
 
   return (
     <Flex vertical gap="small">
