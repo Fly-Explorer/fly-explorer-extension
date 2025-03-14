@@ -20,10 +20,24 @@ export const SubmitBountyTab: React.FC = () => {
   } = useBounty()
 
   useEffect(() => {
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.lastEvaluation) {
+        setLastEvaluation(changes.lastEvaluation.newValue);
+      }
+    };
+
+    // Initial load
     chrome.storage.local.get('lastEvaluation').then((result) => {
-      setLastEvaluation(result.lastEvaluation)
-    })
-  }, [lastEvaluation])
+      setLastEvaluation(result.lastEvaluation);
+    });
+
+    // Listen for changes
+    chrome.storage.local.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      chrome.storage.local.onChanged.removeListener(handleStorageChange);
+    };
+  }, []); // Empty dependency array since we're using the listener for updates
 
   return (
     <Flex vertical gap="small">
@@ -43,23 +57,14 @@ export const SubmitBountyTab: React.FC = () => {
               options={bounties.map((bounty) => ({
                 value: bounty.cid,
                 label: bounty.title,
-                children: (
-                  <Flex vertical>
-                    <Typography.Text strong>{bounty.bountyId}</Typography.Text>
-                    {bounty.creator && (
-                      <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                        {bounty.creator}
-                      </Typography.Text>
-                    )}
-                    {bounty.rewardAmount && (
-                      <Typography.Text type="success" style={{ fontSize: '12px' }}>
-                        Reward: {bounty.rewardAmount}
-                      </Typography.Text>
-                    )}
-                  </Flex>
-                ),
               }))}
-            />
+            >
+              {bounties.map((bounty) => (
+                <Select.Option key={bounty.cid} value={bounty.cid} label={bounty.title}>
+                  <></>
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item>

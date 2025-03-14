@@ -1,32 +1,58 @@
 import React, { useState, useEffect } from 'react';
 
-import { rewardServices } from '../sonic/sonic';
 import { BountyType, IPost } from './type';
 import { BountyCard } from './components/BountyCard';
 import './Bounty.css';
+import { useContract } from './hook/useContract';
+
+export interface IBounty {
+  bounty_id: string; // Unique identifier for the bounty
+  cancelled: boolean; // Indicates if the bounty is cancelled
+  creator: string; // Address of the bounty creator
+  dataRef: string; // Reference to external data (IPFS hash or other)
+  distributed: boolean; // Indicates if the reward has been distributed
+  expiredAt: string; // Expiration time (in seconds or timestamp)
+  minOfParticipants: string; // Minimum number of participants required
+  participants: string[]; // List of participant addresses
+  rewardAmount: string; // Total reward amount (in smallest denomination)
+}
+
+export interface IDetailBounty {
+  title: string;
+  description: string;
+  requirements: string[];
+  tags: string[];
+  allPostData: {
+    [key: string]: string[];
+  };
+  cid: string;
+}
 
 const BountyList: React.FC = () => {
-  const [bounties, setBounties] = useState<BountyType[]>([]);
-  const [selectedBounty, setSelectedBounty] = useState<IPost | null>(null);
+  const [bounties, setBounties] = useState<IDetailBounty[]>([]);
+  const [selectedBounty, setSelectedBounty] = useState<IDetailBounty | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [postData, setPostData] = useState<IPost[]>([]);
+  const { getAllBounties } = useContract();
 
   const fetchBounties = async () => {
-    setLoading(true);
     try {
-      const rewards = await rewardServices.findAll();
-      const bountyPromises = await Promise.all(rewards
-        .filter(item => item.bountyId.length > 40)
-        .map(async item => ({
-          ...(await getPinataData(item.bountyId)),
-          cid: item.bountyId
-        })));
+      const data = await getAllBounties<IBounty[]>();
 
-      const finalBounties = bountyPromises.filter(item => !item.tags.includes('Aptos'))
+      // Use Promise.all to wait for all async operations
+      const temp: IDetailBounty[] = await Promise.all(
+        data.map(async (e) => {
+          const da = await getPinataData(e.bounty_id);
+          console.log(da)
+          return da;
+        })
+      );
 
-      setPostData(finalBounties);
+      setBounties(temp);
     } catch (error) {
       console.error("Error fetching bounties:", error);
     } finally {
@@ -34,13 +60,14 @@ const BountyList: React.FC = () => {
     }
   };
 
-  const getPinataData = async (cid: string): Promise<IPost> => {
+  const getPinataData = async (cid: string): Promise<IDetailBounty> => {
     try {
       const response = await fetch(`https://ipfs.io/ipfs/${cid}`);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! Status: ${response.status}`);
       const data = await response.json();
       console.log("Data from IPFS:", data);
-      return data as IPost;
+      return data as IDetailBounty;
     } catch (error) {
       console.error("IPFS Error:", error.message);
       throw error;
@@ -58,12 +85,8 @@ const BountyList: React.FC = () => {
 
   return (
     <div className="container page-container">
-      <div className="header-container">
-        <div>
-          <h1>Bounties</h1>
-          <p className="subtitle">Discover and contribute to exciting projects</p>
-        </div>
-      </div>
+      <h1 className="text-3xl font-bold mb-2">Explore Bounties</h1>
+      <p className="text-gray-600 mb-6">Discover and contribute to exciting projects</p>
 
       {loading ? (
         <div className="grid-layout">
@@ -86,11 +109,11 @@ const BountyList: React.FC = () => {
         </div>
       ) : (
         <div className="grid-layout">
-          {postData.map((bounty) => (
+          {bounties.map((bounty) => (
             <BountyCard
               key={bounty.description}
-              postData={bounty}
-              onClick={handleOpenModal}
+              bounty={bounty}
+            // onClick={handleOpenModal}
             />
           ))}
         </div>

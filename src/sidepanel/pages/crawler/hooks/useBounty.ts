@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import showToast from '../../../../utils/toast'
 import { useDataStore } from '../store/useDataStore'
 import { useTabStore } from '../store/useTabStore'
-import { Bounty, rewardServices } from '../../../../sonic/sonic'
 import { useUpload } from './useUpload'
+import { IBounty, IDetailBounty } from '../../../../newtab/Bounty'
+import { useContract } from '../../../../newtab/hook/useContract'
 
 export const useBounty = () => {
-  const [bounties, setBounties] = useState<Bounty[]>([])
+  const [bounties, setBounties] = useState<IDetailBounty[]>([])
   const [selectedBounty, setSelectedBounty] = useState<string | null>(null)
   const [loadingBounties, setLoadingBounties] = useState<boolean>(false)
   const [submittingBounty, setSubmittingBounty] = useState<boolean>(false)
@@ -14,14 +15,42 @@ export const useBounty = () => {
   const { activeTab, setActiveTab } = useTabStore()
   const { selectedData, clearItems } = useDataStore()
   const { groupState, handleUploadBounty } = useUpload()
+  const [loading, setLoading] = useState<boolean>(false)
 
-  const getPinataData = async (cid: string): Promise<any> => {
+  const { getAllBounties } = useContract();
+
+  const fetchBounties = async () => {
+    try {
+      const data = await getAllBounties<IBounty[]>();
+
+      // Use Promise.all to wait for all async operations
+      const temp: IDetailBounty[] = await Promise.all(
+        data.map(async (e) => {
+          const da = await getPinataData(e.bounty_id);
+          console.log(da)
+          return {
+            ...da,
+            cid: e.bounty_id,
+          };
+        })
+      );
+
+      setBounties(temp);
+    } catch (error) {
+      console.error("Error fetching bounties:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPinataData = async (cid: string): Promise<IDetailBounty> => {
     try {
       const response = await fetch(`https://ipfs.io/ipfs/${cid}`);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! Status: ${response.status}`);
       const data = await response.json();
       console.log("Data from IPFS:", data);
-      return data;
+      return data as IDetailBounty;
     } catch (error) {
       console.error("IPFS Error:", error.message);
       throw error;
@@ -29,27 +58,6 @@ export const useBounty = () => {
   };
 
   useEffect(() => {
-    const fetchBounties = async () => {
-      setLoadingBounties(true)
-      try {
-        const rewards = await rewardServices.findAll()
-        const bounties = await Promise.all(rewards.filter(item => item.bountyId.length > 40).map(async item => ({
-          ...(await getPinataData(item.bountyId)),
-          cid: item.bountyId
-        }
-        ))
-        );
-        const finalBounties = bounties.filter(item => !item.tags.includes('Aptos'))
-        console.log('🚀 ~ fetchBounties ~ bounties:', finalBounties)
-        setBounties(finalBounties as Bounty[])
-        setLoadingBounties(false)
-      } catch (error) {
-        console.error('Error fetching bounties:', error)
-        showToast.error('Not find bounties')
-        setLoadingBounties(false)
-      }
-    }
-
     fetchBounties()
   }, [])
 
@@ -60,6 +68,7 @@ export const useBounty = () => {
   }, []);
 
   const handleSetSelectedBounty = (bountyId: string | null) => {
+    console.log('🚀 ~ handleSetSelectedBounty ~ bountyId:', bountyId)
     setSelectedBounty(bountyId);
     chrome.storage.local.set({ selectedBounty: bountyId });
   };

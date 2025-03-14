@@ -45,10 +45,20 @@ export const useUpload = () => {
     chrome.storage.local.get('selectedTopic').then((result) => {
       setSelectedTopic(result.selectedTopic || null);
     });
+  }, []);
 
-    chrome.storage.local.get('selectedBounty').then((result) => {
-      setSelectedBounty(result.selectedBounty || null);
-    });
+  useEffect(() => {
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.selectedBounty) {
+        setSelectedBounty(changes.selectedBounty.newValue);
+      }
+    };
+
+    chrome.storage.local.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      chrome.storage.local.onChanged.removeListener(handleStorageChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -175,6 +185,16 @@ export const useUpload = () => {
         return;
       }
 
+      if (!selectedBounty) {
+        showToast.error('Please select a bounty first');
+        return;
+      }
+
+      if (!address) {
+        showToast.error('Wallet address not found');
+        return;
+      }
+
       let groupId: string;
 
       // Case: Create group
@@ -215,10 +235,12 @@ export const useUpload = () => {
         chrome.storage.local.set({ lastEvaluation: evaluationData })
 
         setLastEvaluation(evaluationData)
+        showToast.success('Upload successful');
 
       } catch (error) {
         console.error('Error uploading file:', error);
         showToast.error('Upload failed');
+        throw error; // Re-throw to be caught by outer catch
       }
     } catch (error) {
       console.error('Error in upload process:', error);
