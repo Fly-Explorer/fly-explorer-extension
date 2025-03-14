@@ -78,7 +78,7 @@ export const useUpload = () => {
       }
     };
     fetchGroups();
-  }, [address, selectedTopic]);
+  }, [address, selectedTopic, groupState?.createGroup]);
 
   const handleCreateGroup = async (): Promise<GroupResponseItem> => {
     if (!selectedTopic || !address) {
